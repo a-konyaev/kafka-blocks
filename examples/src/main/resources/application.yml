@@ -1,35 +1,26 @@
-spring.main.banner-mode: 'off'
+spring.main:
+  banner-mode: 'off'
+  web-application-type: 'none'
 
 logging.level:
   root: WARN
-  #org.springframework: WARN
-  #org.apache.kafka: INFO
-  ru.croc: INFO
+  org.springframework: WARN
+  org.apache.kafka: WARN
+  kafkablocks: DEBUG
 
 spring.kafka:
   bootstrap-servers: kafka:9092
   streams:
-    application-id: ReportProcessors
+    application-id: examples-processors-consumer-group
     cache-max-size-buffering: 0
   consumer:
     #auto-offset-reset: latest
     properties.spring.json.trusted.packages: "*"
 
-whswd.kafka:
-  processing.streams-thread-number: 8
+kafkablocks:
+  #processing.streams-thread-number: 2
+  packageName: kafkablocks.examples.events
   eventTopic:
-    TrackableObjectMovementEvent: object-movement
-    TrackableObjectCoordsEvent: object-coords
-    ZoneEntranceEvent: zone-entrance
-    TrackableObjectEntranceToZoneEvent: object-zone-entrance
-
-spring.datasource:
-  url: jdbc:postgresql://db:5432/whswd
-  username: whswd
-  password: whswd
-
-spring.jpa:
-  hibernate.ddl-auto: validate
-  properties.hibernate:
-    dialect: org.hibernate.dialect.PostgreSQL94Dialect
-    temp.use_jdbc_metadata_defaults: false
+    PositionEvent: position
+    DistanceEvent: distance
+    SpeedEvent: speed

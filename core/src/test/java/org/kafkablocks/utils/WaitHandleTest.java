@@ -1,11 +1,11 @@
-package org.kafkablocks.utils;
+package kafkablocks.utils;
 
 import lombok.SneakyThrows;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.kafkablocks.concurrent.WaitHandle;
+import kafkablocks.concurrent.WaitHandle;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;

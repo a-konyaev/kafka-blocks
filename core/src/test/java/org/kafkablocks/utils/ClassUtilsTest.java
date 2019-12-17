@@ -1,4 +1,4 @@
-package org.kafkablocks.utils;
+package kafkablocks.utils;
 
 import org.junit.Assert;
 import org.junit.Test;
