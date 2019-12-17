@@ -1,12 +1,16 @@
 package kafkablocks.examples.events;
 
-import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+@Getter
 @NoArgsConstructor
-@AllArgsConstructor
 public class DistanceEvent extends ObjectEvent {
 
     private int distance;
 
+    public DistanceEvent(String objectId, int distance) {
+        super(objectId);
+        this.distance = distance;
+    }
 }

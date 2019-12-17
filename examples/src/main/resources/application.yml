@@ -24,3 +24,4 @@ kafkablocks:
     PositionEvent: position
     DistanceEvent: distance
     SpeedEvent: speed
+    AccelerationEvent: acceleration

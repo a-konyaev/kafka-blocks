@@ -11,7 +11,7 @@ public final class ThreadUtils {
      * Вызывает Thread.sleep с заданным кол-вом секунд.
      *
      * @param sec кол-во секунд
-     * @return true - ожидание завершено, false - ожидание было предвано
+     * @return true - ожидание завершено, false - ожидание было прервано
      */
     public static boolean safeDelaySec(long sec) {
         return safeDelay(sec * 1000);
@@ -21,7 +21,7 @@ public final class ThreadUtils {
      * Вызывает Thread.sleep с заданным кол-вом миллисекунд.
      *
      * @param millis кол-во миллисекунд
-     * @return true - ожидание завершено, false - ожидание было предвано
+     * @return true - ожидание завершено, false - ожидание было прервано
      */
     public static boolean safeDelay(long millis) {
         try {

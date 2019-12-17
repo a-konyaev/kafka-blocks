@@ -1,4 +1,4 @@
-package kafkablocks.examples;
+package kafkablocks.examples.processing;
 
 import kafkablocks.examples.events.DistanceEvent;
 import kafkablocks.examples.events.SpeedEvent;
@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -18,6 +19,9 @@ public class SpeedProcessor
 
     @Override
     protected List<SpeedEvent> process(String key, DistanceEvent distanceEvent) {
-        return null;
+        // todo
+        var speedEvent = new SpeedEvent(distanceEvent.getObjectId(), 0);
+
+        return Collections.singletonList(speedEvent);
     }
 }
