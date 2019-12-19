@@ -5,91 +5,22 @@
 
     <groupId>kafkablocks</groupId>
     <artifactId>parent-pom</artifactId>
-    <name>parent-pom</name>
+    <version>1.0.0-SNAPSHOT</version>
+    <name>kafka-blocks</name>
+    <description>Useful modules for working with Apache Kafka</description>
     <packaging>pom</packaging>
-    <version>0.0.1</version>
-
-
-    <properties>
-       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <java.version>12</java.version>
-    </properties>
-
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.2.2.RELEASE</version>
-        <relativePath/>
-    </parent>
 
     <modules>
         <module>core</module>
         <module>examples</module>
+        <module>slides</module>
     </modules>
 
-    <dependencies>
-        <!--springframework-->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-jersey</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-configuration-processor</artifactId>
-            <optional>true</optional>
-        </dependency>
+    <developers>
+        <developer>
+            <name>Alexey Konyaev</name>
+            <email>akonyaev@gmail.com</email>
+        </developer>
+    </developers>
 
-        <!--kafka-->
-        <dependency>
-            <groupId>org.springframework.kafka</groupId>
-            <artifactId>spring-kafka</artifactId>
-            <version>${spring-kafka.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka-clients</artifactId>
-            <version>${kafka.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.kafka</groupId>
-            <artifactId>spring-kafka-test</artifactId>
-            <version>${spring-kafka.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!--others-->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
-        </dependency>
-
-        <!--unit tests-->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
 </project>

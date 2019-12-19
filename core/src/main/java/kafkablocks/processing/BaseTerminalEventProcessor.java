@@ -22,6 +22,9 @@ public abstract class BaseTerminalEventProcessor
 
     @Override
     public void process(String key, EventToProcess value) {
+        logger.info("input event: {}", key);
+        logger.debug("process input event: {} -> {}", key, value);
+
         try {
             processEvent(key, value);
         } catch (Exception e) {
