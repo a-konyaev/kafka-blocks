@@ -1,5 +1,4 @@
 = Kafka: некоторые интересные практики
-Алексей Коняев, Ведущий разработчик, КРОК
 :revealjs_theme: black
 :revealjs_customtheme: white_course.css
 :revealjs_slideNumber:
@@ -22,28 +21,99 @@ include::_doc_general_attributes.adoc[]
 :revealjs_width: 1600
 :revealjs_height: 900
 
-
-//== Часть 1. Введение
 :!figure-caption:
 
-akonyaev@croc.ru
-
 [%notitle]
-== 1111
+== Истории создания и развития
 
-== Некоторые итоги
+[cols="50a,50a",frame=none,grid=none]
+|===
+.^|
+* 2011 - LinkedIn передал в open-source
+* 2014 - Создана компания Confluent
+* 2019 - Release 2.4.0
+.^|image::kafka_logo.png[]
+#Горизонтально-масштабируемая::
+#Быстрая::
+#Отказоустойчивая::
+|===
+
+== Теория
+
+[cols="30a,70a",frame=none,grid=none]
+|===
+|
+* Event log
+** key
+** body
+** timestamp
+* Topic
+** offset
+** partitions
+** replication-factor
+** retention
+* Producer & Consumer
+* Exactly-once semantics
+|image::kafka_anatomy.png[]
+|===
+
+== 1 партиция -- 1 группа с 1 потребителем
+image::kafka_consumer_0.png[width=75%]
+
+== N партиций -- 1 группа с 1 потребителем
+image::kafka_consumer_1.png[width=75%]
+
+== N партиций -- N групп по M потребителей (M \<= N)
+image::kafka_consumer_2.png[width=75%]
+
+== N партиций -- 1 группа с M потребителем (M > N)
+image::kafka_consumer_3.png[width=75%]
+
+== Очередность получения событий
+image::kafka_consumer_4.png[]
+
+== Цифровой рабочий
+
+Носимые технологии и системы позиционирования в режиме реального времени
+
+image::digital_worker.png[]
+
+== Поднимаем Kafka в Docker
+
+== Утилиты
+
+== Публикация событий
+
+[source,java]
+----
+while (true) {}
+----
+
+== Потребление событий
+
+== Обработка событий на KafkaStreams
+
+== Интеграция
+
+* Kafka Connect
+
+== Интеграция с Clickhouse
+
+== Интеграция с Esper
+
+== И чё?
 
 [%step]
-* Kafka StreamsAPI -- это удобная абстракция над «сырой» Кафкой
-* Чтобы начать пользоваться, надо настроить мышление под потоковую обработку
-* Технология переживает бурное развитие
-** + живой community, есть шанс повлиять на процесс самому 
-** - публичные интерфейсы изменяются очень быстро
+* Kafka легко принести в свой проект
+* Kafka можно использовать для
+** взаимодействия модулей
+** потоковой обработки
+** в Event Sourcing архитектуре
+* Есть наработки в проекте "Цифровой рабочий": icon:gitlab[size=lg] https://gitlab.croc.ru/akonyaev/kafka-blocks[gitlab.croc.ru/akonyaev/kafka-blocks]
 
-== Исходники с примерами
+[cols=">",frame=none]
+|===
+|*Алексей Коняев*, akonyaev@croc.ru
+|===
 
-icon:gitlab[size=lg] https://gitlab.croc.ru/CROC.DRPO_RnD/kafka-blocks[CROC.DRPO_RnD/akonyaev/kafka]
 
-akonyaev@corchestra.ru
-
-*Спасибо!*
