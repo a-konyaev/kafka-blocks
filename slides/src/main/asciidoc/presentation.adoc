@@ -1,6 +1,6 @@
 = Kafka: некоторые интересные практики
 :revealjs_theme: black
-:revealjs_customtheme: white_course.css
+:revealjs_customtheme: theme.css
 :revealjs_slideNumber:
 :revealjs_history:
 :revealjs_progress:
@@ -63,13 +63,19 @@ image::kafka_consumer_0.png[width=75%]
 == N партиций -- 1 группа с 1 потребителем
 image::kafka_consumer_1.png[width=75%]
 
-== N партиций -- N групп по M потребителей (M \<= N)
+== N партиций -- Несколько групп по M потребителей (M &le; N)
 image::kafka_consumer_2.png[width=75%]
 
 == N партиций -- 1 группа с M потребителем (M > N)
 image::kafka_consumer_3.png[width=75%]
 
 == Очередность получения событий
+
+Порядок получения событий сохраняется:
+
+* В рамках партиции
+* Для событий с одинаковым ключом
+
 image::kafka_consumer_4.png[]
 
 == Цифровой рабочий
@@ -101,7 +107,7 @@ while (true) {}
 
 == Интеграция с Esper
 
-== И чё?
+== Что в итоге?
 
 [%step]
 * Kafka легко принести в свой проект
@@ -109,7 +115,8 @@ while (true) {}
 ** взаимодействия модулей
 ** потоковой обработки
 ** в Event Sourcing архитектуре
-* Есть наработки в проекте "Цифровой рабочий": icon:gitlab[size=lg] https://gitlab.croc.ru/akonyaev/kafka-blocks[gitlab.croc.ru/akonyaev/kafka-blocks]
+* Есть наработки в проекте "Цифровой рабочий":
+https://gitlab.croc.ru/sandbox/AKonyaev/kafka-blocks[gitlab.croc.ru/sandbox/AKonyaev/kafka-blocks]
 
 [cols=">",frame=none]
 |===
