@@ -23,19 +23,25 @@ include::_doc_general_attributes.adoc[]
 
 :!figure-caption:
 
+*Алексей Коняев*, akonyaev@croc.ru
+
 [%notitle]
 == Истории создания и развития
 
 [cols="50a,50a",frame=none,grid=none]
 |===
 .^|
+[%step]
 * 2011 - LinkedIn передал в open-source
 * 2014 - Создана компания Confluent
 * 2019 - Release 2.4.0
 .^|image::kafka_logo.png[]
-#Горизонтально-масштабируемая::
-#Быстрая::
-#Отказоустойчивая::
+
+[big]##Горизонтально-масштабируемая#
+
+[big]##Быстрая#
+
+[big]##Отказоустойчивая#
 |===
 
 == Как устроена
@@ -57,47 +63,45 @@ include::_doc_general_attributes.adoc[]
 |image::kafka_anatomy.png[]
 |===
 
-=== 1 партиция -- 1 группа с 1 потребителем
-image::kafka_consumer_0.png[width=75%]
+== 1 партиция -- 1 группа с 1 потребителем
+image::kafka_consumer_0.png[width=40%]
 
-=== N партиций -- 1 группа с 1 потребителем
-image::kafka_consumer_1.png[width=75%]
+== N партиций -- 1 группа с 1 потребителем
+image::kafka_consumer_1.png[width=40%]
 
-=== N партиций -- Несколько групп по M потребителей (M &le; N)
-image::kafka_consumer_2.png[width=75%]
+== N партиций -- Несколько групп по M потребителей (M &le; N)
+image::kafka_consumer_2.png[width=40%]
 
-=== N партиций -- 1 группа с M потребителем (M > N)
-image::kafka_consumer_3.png[width=75%]
+== N партиций -- 1 группа с M потребителем (M > N)
+image::kafka_consumer_3.png[width=40%]
 
-=== Очередность получения событий
-
-Порядок получения событий сохраняется:
-
+== Очередность получения событий сохраняется
 * В рамках партиции
 * Для событий с одинаковым ключом
 
-image::kafka_consumer_4.png[]
+image::kafka_consumer_4.png[width=50%]
 
 == Цифровой рабочий
 
-* Носимые технологии и системы позиционирования в режиме реального времени
-* 1.5М событий в секунду (_оценка сверху_)
+[cols="30a,70a",frame=none,grid=none]
+|===
+.^|
+* Носимые технологии
+* Позиционирование IN/OUT-DOOR
+* Работа в режиме реального времени
+* Обработка до 1.5М событий в секунду
+.^|image::digital_worker.png[]
+|===
 
-image::digital_worker.png[]
-
-== Поднимаем в Docker
-
-docker-compose.yaml
+== Поднимаем в Docker: docker-compose.yaml
 [source,yaml]
 ----
 version: '2.4'
 services:
-
   zookeeper:
     image: wurstmeister/zookeeper
     ports:
       - "2181:2181"
-
   kafka:
     image: wurstmeister/kafka
     depends_on:
@@ -114,43 +118,48 @@ services:
         speed:1:1,
         acceleration:1:1
 ----
-application.yml
+== Подключаемся из приложения: application.yml
 [source,yaml]
 ----
 spring.kafka:
   bootstrap-servers: kafka:9092
 ----
-Для отладки с локального хоста добавить маппинг в `c:\Windows\System32\drivers\etc\hosts`
+{nbsp}
+
+Для отладки с локального хоста добавить маппинг
 [source,text]
 ----
+c:\Windows\System32\drivers\etc\hosts
+
 127.0.0.1 kafka
 ----
 
-== Утилиты
+== Утилиты. Список топиков
+[source,bash]
+----
+$ kafka-topics --zookeeper zookeeper:2181 --list
 
-* Список топиков
+$ kafkacat -b kafka:9092 -L
+----
+== Утилиты. Публикация событий
 [source,bash]
 ----
-> kafka-topics --zookeeper zookeeper:2181 --list
-> kafkacat -b kafka:9092 -L
-----
-* Потребление событий
-[source,bash]
-----
-> kafka-console-consumer --bootstrap-server kafka:9092 --topic my_topic \
-    --property print.key=true --property print.value=true
-
-> kafkacat -b kafka:9092 -t my_topic -C -o end -K\t
-> kafkacat -b kafka:9092 -t my_topic -C -o beginning -c 10
-----
-* Публикация событий
-[source,bash]
-----
-> kafka-console-producer --broker-list kafka:9092 --topic my_topic \
+$ kafka-console-producer --broker-list kafka:9092 --topic my_topic \
     --property "parse.key=true" --property "key.separator=\t"  < my_file.txt
 
-> kafkacat -b kafka:9092 -t my_topic -P -K\t
-> kafkacat -b kafka:9092 -t my_topic -P -K\t -l my_file.txt
+$ kafkacat -b kafka:9092 -t my_topic -P -K\t
+
+$ kafkacat -b kafka:9092 -t my_topic -P -K\t -l my_file.txt
+----
+== Утилиты. Потребление событий
+[source,bash]
+----
+$ kafka-console-consumer --bootstrap-server kafka:9092 --topic my_topic \
+    --property print.key=true --property print.value=true
+
+$ kafkacat -b kafka:9092 -t my_topic -C -o end -K\t
+
+$ kafkacat -b kafka:9092 -t my_topic -C -o beginning -c 10
 ----
 
 == Публикация событий
@@ -173,7 +182,6 @@ while (true) {}
 == Интеграция с Esper
 
 == Что в итоге?
-
 [%step]
 * Kafka легко принести в свой проект
 * Kafka можно использовать
@@ -182,10 +190,3 @@ while (true) {}
 ** в Event Sourcing архитектуре
 * Есть наработки в проекте "Цифровой рабочий":
 https://gitlab.croc.ru/sandbox/AKonyaev/kafka-blocks[gitlab.croc.ru/sandbox/AKonyaev/kafka-blocks]
-
-[cols=">",frame=none]
-|===
-|*Алексей Коняев*, akonyaev@croc.ru
-|===
-
-
