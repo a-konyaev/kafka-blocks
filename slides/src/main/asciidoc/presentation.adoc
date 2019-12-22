@@ -38,7 +38,7 @@ include::_doc_general_attributes.adoc[]
 #Отказоустойчивая::
 |===
 
-== Теория
+== Как устроена
 
 [cols="30a,70a",frame=none,grid=none]
 |===
@@ -57,19 +57,19 @@ include::_doc_general_attributes.adoc[]
 |image::kafka_anatomy.png[]
 |===
 
-== 1 партиция -- 1 группа с 1 потребителем
+=== 1 партиция -- 1 группа с 1 потребителем
 image::kafka_consumer_0.png[width=75%]
 
-== N партиций -- 1 группа с 1 потребителем
+=== N партиций -- 1 группа с 1 потребителем
 image::kafka_consumer_1.png[width=75%]
 
-== N партиций -- Несколько групп по M потребителей (M &le; N)
+=== N партиций -- Несколько групп по M потребителей (M &le; N)
 image::kafka_consumer_2.png[width=75%]
 
-== N партиций -- 1 группа с M потребителем (M > N)
+=== N партиций -- 1 группа с M потребителем (M > N)
 image::kafka_consumer_3.png[width=75%]
 
-== Очередность получения событий
+=== Очередность получения событий
 
 Порядок получения событий сохраняется:
 
@@ -80,13 +80,78 @@ image::kafka_consumer_4.png[]
 
 == Цифровой рабочий
 
-Носимые технологии и системы позиционирования в режиме реального времени
+* Носимые технологии и системы позиционирования в режиме реального времени
+* 1.5М событий в секунду (_оценка сверху_)
 
 image::digital_worker.png[]
 
-== Поднимаем Kafka в Docker
+== Поднимаем в Docker
+
+docker-compose.yaml
+[source,yaml]
+----
+version: '2.4'
+services:
+
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: wurstmeister/kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CREATE_TOPICS: >-
+        position:1:1,
+        distance:1:1,
+        speed:1:1,
+        acceleration:1:1
+----
+application.yml
+[source,yaml]
+----
+spring.kafka:
+  bootstrap-servers: kafka:9092
+----
+Для отладки с локального хоста добавить маппинг в `c:\Windows\System32\drivers\etc\hosts`
+[source,text]
+----
+127.0.0.1 kafka
+----
 
 == Утилиты
+
+* Список топиков
+[source,bash]
+----
+> kafka-topics --zookeeper zookeeper:2181 --list
+> kafkacat -b kafka:9092 -L
+----
+* Потребление событий
+[source,bash]
+----
+> kafka-console-consumer --bootstrap-server kafka:9092 --topic my_topic \
+    --property print.key=true --property print.value=true
+
+> kafkacat -b kafka:9092 -t my_topic -C -o end -K\t
+> kafkacat -b kafka:9092 -t my_topic -C -o beginning -c 10
+----
+* Публикация событий
+[source,bash]
+----
+> kafka-console-producer --broker-list kafka:9092 --topic my_topic \
+    --property "parse.key=true" --property "key.separator=\t"  < my_file.txt
+
+> kafkacat -b kafka:9092 -t my_topic -P -K\t
+> kafkacat -b kafka:9092 -t my_topic -P -K\t -l my_file.txt
+----
 
 == Публикация событий
 
@@ -111,9 +176,9 @@ while (true) {}
 
 [%step]
 * Kafka легко принести в свой проект
-* Kafka можно использовать для
-** взаимодействия модулей
-** потоковой обработки
+* Kafka можно использовать
+** для взаимодействия модулей
+** для потоковой обработки данных
 ** в Event Sourcing архитектуре
 * Есть наработки в проекте "Цифровой рабочий":
 https://gitlab.croc.ru/sandbox/AKonyaev/kafka-blocks[gitlab.croc.ru/sandbox/AKonyaev/kafka-blocks]

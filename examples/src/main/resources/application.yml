@@ -11,10 +11,10 @@ logging.level:
 spring.kafka:
   bootstrap-servers: kafka:9092
   streams:
-    application-id: examples-processors-consumer-group
+    application-id: examples-consumer-group
     cache-max-size-buffering: 0
   consumer:
-    #auto-offset-reset: latest
+    auto-offset-reset: latest
     properties.spring.json.trusted.packages: "*"
 
 kafkablocks:
@@ -25,3 +25,5 @@ kafkablocks:
     DistanceEvent: distance
     SpeedEvent: speed
     AccelerationEvent: acceleration
+
+  #examples.publisherCount: 10

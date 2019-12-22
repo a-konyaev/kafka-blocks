@@ -9,6 +9,7 @@ import kafkablocks.utils.ThreadUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -19,16 +20,17 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
 @Slf4j
+@EnableConfigurationProperties(PositionEventPublisherProperties.class)
 public class PositionEventPublisher extends ServiceBase {
+    private final PositionEventPublisherProperties properties;
     private final KafkaPublisher kafkaPublisher;
 
-    private static final int THREAD_COUNT = 3;
-    private final List<Thread> threads = new ArrayList<>(THREAD_COUNT);
+    private final List<Thread> threads = new ArrayList<>();
     private final WaitHandle stoppedEvent = new WaitHandle();
 
     @Override
     protected void init() {
-        for (int i = 0; i < THREAD_COUNT; i++) {
+        for (int i = 0; i < properties.getPublisherCount(); i++) {
             var thread = ThreadUtils.startNewThread(this::run, "publisher-" + i);
             threads.add(thread);
         }
