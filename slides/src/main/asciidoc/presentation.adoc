@@ -98,10 +98,12 @@ image::kafka_consumer_4.png[width=50%]
 ----
 version: '2.4'
 services:
+
   zookeeper:
     image: wurstmeister/zookeeper
     ports:
       - "2181:2181"
+
   kafka:
     image: wurstmeister/kafka
     depends_on:
@@ -119,14 +121,17 @@ services:
         acceleration:1:1
 ----
 == Подключаемся из приложения: application.yml
+{nbsp}
 [source,yaml]
 ----
 spring.kafka:
   bootstrap-servers: kafka:9092
 ----
 {nbsp}
+{nbsp}
 
-Для отладки с локального хоста добавить маппинг
+Для отладки с локального хоста
+{nbsp}
 [source,text]
 ----
 c:\Windows\System32\drivers\etc\hosts
@@ -135,27 +140,33 @@ c:\Windows\System32\drivers\etc\hosts
 ----
 
 == Утилиты. Список топиков
+{nbsp}
 [source,bash]
 ----
 $ kafka-topics --zookeeper zookeeper:2181 --list
 
+
 $ kafkacat -b kafka:9092 -L
 ----
 == Утилиты. Публикация событий
+{nbsp}
 [source,bash]
 ----
 $ kafka-console-producer --broker-list kafka:9092 --topic my_topic \
     --property "parse.key=true" --property "key.separator=\t"  < my_file.txt
+
 
 $ kafkacat -b kafka:9092 -t my_topic -P -K\t
 
 $ kafkacat -b kafka:9092 -t my_topic -P -K\t -l my_file.txt
 ----
 == Утилиты. Потребление событий
+{nbsp}
 [source,bash]
 ----
 $ kafka-console-consumer --bootstrap-server kafka:9092 --topic my_topic \
     --property print.key=true --property print.value=true
+
 
 $ kafkacat -b kafka:9092 -t my_topic -C -o end -K\t
 
