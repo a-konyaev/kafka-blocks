@@ -90,21 +90,18 @@ body {
   margin-bottom: 10px;
   margin-top: 100px;
   border-bottom: 2px dotted #DDD;
-  padding-bottom: 5px;
-  
-  }
+  padding-bottom: 5px; }
 
 .reveal h2 {
-  font-size: 2.1em; 
+  font-family: Roboto-condensed;
+  font-size: 2.1em;
   padding-bottom: 10px;
   border-bottom: 2px dotted #DDD;
-  font-family: Roboto-condensed;}
-  
- 
+}
+
 .reveal .title h2 {
   padding-bottom: 0;
   border-bottom: none}
-  
 
 .reveal h3 {
   font-size: 1.2em; }
@@ -211,7 +208,7 @@ body {
 
 .reveal pre code {
   /* display: block;*/
-  font-size: 2.1em;
+  font-size: 1.8em;
   font-weight: bold;
   padding: 5px;
   overflow: auto;

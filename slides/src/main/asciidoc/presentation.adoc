@@ -63,23 +63,23 @@ include::_doc_general_attributes.adoc[]
 |image::kafka_anatomy.png[]
 |===
 
-== 1 партиция -- 1 группа с 1 потребителем
-image::kafka_consumer_0.png[width=40%]
-
-== N партиций -- 1 группа с 1 потребителем
-image::kafka_consumer_1.png[width=40%]
-
-== N партиций -- Несколько групп по M потребителей (M &le; N)
-image::kafka_consumer_2.png[width=40%]
-
-== N партиций -- 1 группа с M потребителем (M > N)
-image::kafka_consumer_3.png[width=40%]
-
-== Очередность получения событий сохраняется
-* В рамках партиции
-* Для событий с одинаковым ключом
-
-image::kafka_consumer_4.png[width=50%]
+//== 1 партиция -- 1 группа с 1 потребителем
+//image::kafka_consumer_0.png[width=40%]
+//
+//== N партиций -- 1 группа с 1 потребителем
+//image::kafka_consumer_1.png[width=40%]
+//
+//== N партиций -- Несколько групп по M потребителей (M &le; N)
+//image::kafka_consumer_2.png[width=40%]
+//
+//== N партиций -- 1 группа с M потребителем (M > N)
+//image::kafka_consumer_3.png[width=40%]
+//
+//== Очередность получения событий сохраняется
+//* В рамках партиции
+//* Для событий с одинаковым ключом
+//
+//image::kafka_consumer_4.png[width=50%]
 
 == Цифровой рабочий
 
@@ -93,111 +93,276 @@ image::kafka_consumer_4.png[width=50%]
 .^|image::digital_worker.png[]
 |===
 
-== Поднимаем в Docker: docker-compose.yaml
-[source,yaml]
-----
-version: '2.4'
-services:
+== Архитектура
+image::dw_architecture.jpg[width=75%]
 
-  zookeeper:
-    image: wurstmeister/zookeeper
-    ports:
-      - "2181:2181"
+== Топология
+image::dw_topology.jpg[width=75%]
 
-  kafka:
-    image: wurstmeister/kafka
-    depends_on:
-      - zookeeper
-    ports:
-      - "9092:9092"
-    environment:
-      KAFKA_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_CREATE_TOPICS: >-
-        position:1:1,
-        distance:1:1,
-        speed:1:1,
-        acceleration:1:1
-----
-== Подключаемся из приложения: application.yml
+== Идеология
+
+. Для каждого класса события существует ровно один топик
+. Тип ключа - String
+
 {nbsp}
 [source,yaml]
 ----
-spring.kafka:
-  bootstrap-servers: kafka:9092
-----
-{nbsp}
-{nbsp}
-
-Для отладки с локального хоста
-{nbsp}
-[source,text]
-----
-c:\Windows\System32\drivers\etc\hosts
-
-127.0.0.1 kafka
+whswd.kafka:
+  eventTopic:
+    TagMovementEvent: tag-movement
+    TrackableObjectMovementEvent: object-movement
+    ZoneEntranceEvent: zone-entrance
+    ZoneObjectsEvent: zone-objects
+    TagLinkEvent: tag-link
 ----
 
-== Утилиты. Список топиков
-{nbsp}
-[source,bash]
-----
-$ kafka-topics --zookeeper zookeeper:2181 --list
-
-
-$ kafkacat -b kafka:9092 -L
-----
-== Утилиты. Публикация событий
-{nbsp}
-[source,bash]
-----
-$ kafka-console-producer --broker-list kafka:9092 --topic my_topic \
-    --property "parse.key=true" --property "key.separator=\t"  < my_file.txt
-
-
-$ kafkacat -b kafka:9092 -t my_topic -P -K\t
-
-$ kafkacat -b kafka:9092 -t my_topic -P -K\t -l my_file.txt
-----
-== Утилиты. Потребление событий
-{nbsp}
-[source,bash]
-----
-$ kafka-console-consumer --bootstrap-server kafka:9092 --topic my_topic \
-    --property print.key=true --property print.value=true
-
-
-$ kafkacat -b kafka:9092 -t my_topic -C -o end -K\t
-
-$ kafkacat -b kafka:9092 -t my_topic -C -o beginning -c 10
-----
-
-== Публикация событий
-
+== TerminalEventProcessor
 [source,java]
 ----
-while (true) {}
+@Service
+@Scope("prototype")
+public class TagUnlinkProcessor
+    extends BaseTerminalEventProcessor<TagLinkEvent> {
+
+    @Override
+    protected void processEvent(String key, TagLinkEvent inputEvent) {
+
+        ...
+
+    }
+}
 ----
 
-== Потребление событий
+== TransformingEventProcessor
+[source,java]
+----
+@Service
+@Scope("prototype")
+public class ObjectCoordsProcessor
+        extends BaseTransformingEventProcessor<TrackableObjectMovementEvent, TrackableObjectCoordsEvent> {
 
-== Обработка событий на KafkaStreams
+    @Override
+    protected List<TrackableObjectCoordsEvent> process(
+            String key,
+            TrackableObjectMovementEvent inputEvent) {
 
-== Интеграция
+        if (inputEvent.getMovementType() == MovementType.NO_SIGNAL) {
+            return null;
+        }
 
-* Kafka Connect
+        ...
 
-== Интеграция с Clickhouse
+        TrackableObjectCoordsEvent outputEvent = new TrackableObjectCoordsEvent(...);
+        return Collections.singletonList(outputEvent);
+    }
+}
+----
 
-== Интеграция с Esper
+== StateEventProcessor
+[source,java]
+----
+@Service
+@Scope("prototype")
+public class ObjectMovementProcessor extends
+        BaseTransformingStateEventProcessor<
+                TagMovementEvent, TrackableObjectMovementEvent, ObjectMovementProcessor.TagMovementState> {
 
-== Что в итоге?
+    @Override
+    protected List<TrackableObjectMovementEvent> process(
+            String key, TagMovementEvent inputEvent, TagMovementState state) {
+
+        Coordinates newCoords = inputEvent.getCoordinates();
+        if (state == null) {
+            super.updateState(key, new TagMovementState(newCoords));
+            ...
+            return Collections.singletonList(outputEvent);
+        }
+
+        if (getDistance(newCoords, state.getCoordinates()) < 1.0) {
+            return null;
+        }
+
+        state.setCoordinates(newCoords);
+        super.updateState(key, state);
+        ...
+    }
+
+    static class TagMovementState extends EventProcessorState { ... }
+}
+----
+
+== BaseStateEventProcessor & EventProcessorState
+[source,java]
+----
+public abstract class BaseStateEventProcessor
+        <EventToProcess extends Event, ProcessorState extends EventProcessorState> {
+
+    protected KeyValueStore<String, ProcessorState> stateStore;
+
+    protected ProcessorState getState(String key) { ... }
+
+    protected void updateState(String key, ProcessorState newState) { ... }
+
+    protected void resetState(String key) { ... }
+}
+
+
+public abstract class EventProcessorState {
+    @Getter
+    private long timestamp;
+
+    public long getAge() { ... }
+}
+----
+
+== Punctuator
+[source,java]
+----
+public class ObjectMovementProcessor extends
+        BaseTransformingStateEventProcessor<
+                TagMovementEvent, TrackableObjectMovementEvent, ObjectMovementProcessor.TagMovementState> {
+
+    /**
+    * NOTE: на время работы пунктуатора обработка событий приостанавливается
+    */
+    @Override
+    protected PunctuatorSupplier getPunctuatorSupplier() {
+        return new PunctuatorSupplier(
+            // время запуска
+            timestamp -> {
+                // перебираем ВСЕ состояния
+                super.stateStore.all().forEachRemaining(item -> {
+                    String key = item.key;
+                    TagMovementState state = item.value;
+
+                    if (state.getAge() <= 30000) {
+                        return;
+                    }
+
+                    TrackableObjectMovementEvent outputEvent = getSignalLostEvent(key, state);
+                    super.sendResultEvent(outputEvent);
+                });
+
+            },
+            // частота запуска (раз в 1 минуту)
+            60000);
+    }
+}
+----
+
+== EventProcessorRunner
+[source,java]
+----
+@EnableEventProcessorRunner
+public class Application {
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+}
+----
+
+[%step]
+* Находит все процессоры
+* Автоматически строит топологию
+* Проверяет наличие топиков
+
+//== Поднимаем в Docker: docker-compose.yaml
+//[source,yaml]
+//----
+//version: '2.4'
+//services:
+//
+//  zookeeper:
+//    image: wurstmeister/zookeeper
+//    ports:
+//      - "2181:2181"
+//
+//  kafka:
+//    image: wurstmeister/kafka
+//    depends_on:
+//      - zookeeper
+//    ports:
+//      - "9092:9092"
+//    environment:
+//      KAFKA_LISTENERS: PLAINTEXT://kafka:9092
+//      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+//      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+//      KAFKA_CREATE_TOPICS: >-
+//        position:1:1,
+//        distance:1:1,
+//        speed:1:1,
+//        acceleration:1:1
+//----
+//== Подключаемся из приложения: application.yml
+//{nbsp}
+//[source,yaml]
+//----
+//spring.kafka:
+//  bootstrap-servers: kafka:9092
+//----
+//{nbsp}
+//{nbsp}
+//
+//Для отладки с локального хоста
+//{nbsp}
+//[source,text]
+//----
+//c:\Windows\System32\drivers\etc\hosts
+//
+//127.0.0.1 kafka
+//----
+//
+//== Утилиты. Список топиков
+//{nbsp}
+//[source,bash]
+//----
+//$ kafka-topics --zookeeper zookeeper:2181 --list
+//
+//
+//$ kafkacat -b kafka:9092 -L
+//----
+//== Утилиты. Публикация событий
+//{nbsp}
+//[source,bash]
+//----
+//$ kafka-console-producer --broker-list kafka:9092 --topic my_topic \
+//    --property "parse.key=true" --property "key.separator=\t"  < my_file.txt
+//
+//
+//$ kafkacat -b kafka:9092 -t my_topic -P -K\t
+//
+//$ kafkacat -b kafka:9092 -t my_topic -P -K\t -l my_file.txt
+//----
+//== Утилиты. Потребление событий
+//{nbsp}
+//[source,bash]
+//----
+//$ kafka-console-consumer --bootstrap-server kafka:9092 --topic my_topic \
+//    --property print.key=true --property print.value=true
+//
+//
+//$ kafkacat -b kafka:9092 -t my_topic -C -o end -K\t
+//
+//$ kafkacat -b kafka:9092 -t my_topic -C -o beginning -c 10
+//----
+
+== Что ещё интересного
+
+[%step]
+* Как поднять в Docker
+* Публикация событий c `KafkaPublisher`
+* Потребление событий c `KafkaConsumer`
+** подписка на события
+** режим _Машины времени_
+* Интеграция с
+** Esper
+** Clickhouse
+
+== Итоги
 [%step]
 * Kafka легко принести в свой проект
 * Kafka можно использовать
 ** для взаимодействия модулей
 ** для потоковой обработки данных
 ** в Event Sourcing архитектуре
-* Есть наработки в проекте "Цифровой рабочий":
-https://gitlab.croc.ru/sandbox/AKonyaev/kafka-blocks[gitlab.croc.ru/sandbox/AKonyaev/kafka-blocks]
+* Есть наработки в проекте **Цифровой рабочий**
