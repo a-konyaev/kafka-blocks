@@ -23,7 +23,7 @@ include::_doc_general_attributes.adoc[]
 
 :!figure-caption:
 
-*Алексей Коняев*, akonyaev@croc.ru
+Алексей Коняев, akonyaev@croc.ru
 
 [%notitle]
 == Истории создания и развития
@@ -107,7 +107,7 @@ image::dw_topology.jpg[width=75%]
 {nbsp}
 [source,yaml]
 ----
-whswd.kafka:
+croc.kafka:
   eventTopic:
     TagMovementEvent: tag-movement
     TrackableObjectMovementEvent: object-movement
@@ -121,8 +121,8 @@ whswd.kafka:
 ----
 @Service
 @Scope("prototype")
-public class TagUnlinkProcessor
-    extends BaseTerminalEventProcessor<TagLinkEvent> {
+public class TagUnlinkProcessor extends
+        BaseTerminalEventProcessor<TagLinkEvent> {
 
     @Override
     protected void processEvent(String key, TagLinkEvent inputEvent) {
@@ -138,8 +138,8 @@ public class TagUnlinkProcessor
 ----
 @Service
 @Scope("prototype")
-public class ObjectCoordsProcessor
-        extends BaseTransformingEventProcessor<TrackableObjectMovementEvent, TrackableObjectCoordsEvent> {
+public class ObjectCoordsProcessor extends
+        BaseTransformingEventProcessor<TrackableObjectMovementEvent, TrackableObjectCoordsEvent> {
 
     @Override
     protected List<TrackableObjectCoordsEvent> process(
@@ -208,9 +208,6 @@ public abstract class BaseStateEventProcessor
 
 
 public abstract class EventProcessorState {
-    @Getter
-    private long timestamp;
-
     public long getAge() { ... }
 }
 ----
@@ -361,8 +358,8 @@ public class Application {
 == Итоги
 [%step]
 * Kafka легко принести в свой проект
-* Kafka можно использовать
+* Kafka подходит
 ** для взаимодействия модулей
 ** для потоковой обработки данных
 ** в Event Sourcing архитектуре
-* Есть наработки в проекте **Цифровой рабочий**
+* **Можно использовать наработки проекта ''Цифровой рабочий''**

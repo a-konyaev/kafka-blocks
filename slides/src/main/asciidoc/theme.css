@@ -355,7 +355,7 @@ td.valign-top {
  * LINKS
  *********************************************/
 .reveal a {
-  color: #2a76dd;
+  color: #00CD69;
   text-decoration: none;
   -webkit-transition: color .15s ease;
   -moz-transition: color .15s ease;
@@ -393,7 +393,7 @@ td.valign-top {
 
 .reveal a:hover img {
   background: rgba(255, 255, 255, 0.2);
-  border-color: #2a76dd;
+  border-color: #00CD69;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.55); }
 
 /*********************************************
@@ -401,19 +401,19 @@ td.valign-top {
  *********************************************/
 .reveal .controls .navigate-left,
 .reveal .controls .navigate-left.enabled {
-  border-right-color: #2a76dd; }
+  border-right-color: #00CD69; }
 
 .reveal .controls .navigate-right,
 .reveal .controls .navigate-right.enabled {
-  border-left-color: #2a76dd; }
+  border-left-color: #00CD69; }
 
 .reveal .controls .navigate-up,
 .reveal .controls .navigate-up.enabled {
-  border-bottom-color: #2a76dd; }
+  border-bottom-color: #00CD69; }
 
 .reveal .controls .navigate-down,
 .reveal .controls .navigate-down.enabled {
-  border-top-color: #2a76dd; }
+  border-top-color: #00CD69; }
 
 .reveal .controls .navigate-left.enabled:hover {
   border-right-color: #6ca0e8; }
@@ -443,7 +443,7 @@ td.valign-top {
   background: rgba(0, 0, 0, 0.2); }
 
 .reveal .progress span {
-  background: #2a76dd;
+  background: #00CD69;
   -webkit-transition: width 800ms cubic-bezier(0.26, 0.86, 0.44, 0.985);
   -moz-transition: width 800ms cubic-bezier(0.26, 0.86, 0.44, 0.985);
   transition: width 800ms cubic-bezier(0.26, 0.86, 0.44, 0.985); }
@@ -477,11 +477,11 @@ body {
     position: absolute;
     bottom: 80px;
     width: 100%;
-    color: #2a76dd;
+    color: #00CD69;
 }
 
 .reveal .preamble a {
-    color: #2a76dd;
+    color: #00CD69;
 }
 
 section.title {
