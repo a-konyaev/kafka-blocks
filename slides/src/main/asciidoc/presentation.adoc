@@ -101,162 +101,157 @@ image::dw_topology.jpg[width=75%]
 
 == Идеология
 
-. Для каждого класса события существует ровно один топик
-. Тип ключа - String
+* Для каждого класса события существует ровно один топик
+* Тип ключа - String
 
-{nbsp}
-[source,yaml]
-----
-croc.kafka:
-  eventTopic:
-    TagMovementEvent: tag-movement
-    TrackableObjectMovementEvent: object-movement
-    ZoneEntranceEvent: zone-entrance
-    ZoneObjectsEvent: zone-objects
-    TagLinkEvent: tag-link
-----
+image::code1.png[width=60%]
+//{nbsp}
+//[source,yaml,subs="normal"]
+//----
+//croc.kafka:
+//  eventTopic:
+//
+//    _MyEventClass_: _topic-name-for-my-event_
+//
+//    TagMovementEvent: tag-movement
+//    TrackableObjectMovementEvent: object-movement
+//    TagLinkEvent: tag-link
+//----
 
 == TerminalEventProcessor
-[source,java]
-----
-@Service
-@Scope("prototype")
-public class TagUnlinkProcessor extends
-        BaseTerminalEventProcessor<TagLinkEvent> {
-
-    @Override
-    protected void processEvent(String key, TagLinkEvent inputEvent) {
-
-        ...
-
-    }
-}
-----
+image::code2.png[width=75%]
+//[source,java,subs="normal"]
+//----
+//public class TagUnlinkProcessor extends
+//        BaseTerminalEventProcessor< [blue yellow-background]*TagLinkEvent* > {
+//
+//    @Override
+//    protected void processEvent(String key, TagLinkEvent inputEvent) {
+//
+//        . . .
+//
+//    }
+//}
+//----
 
 == TransformingEventProcessor
-[source,java]
-----
-@Service
-@Scope("prototype")
-public class ObjectCoordsProcessor extends
-        BaseTransformingEventProcessor<TrackableObjectMovementEvent, TrackableObjectCoordsEvent> {
-
-    @Override
-    protected List<TrackableObjectCoordsEvent> process(
-            String key,
-            TrackableObjectMovementEvent inputEvent) {
-
-        if (inputEvent.getMovementType() == MovementType.NO_SIGNAL) {
-            return null;
-        }
-
-        ...
-
-        TrackableObjectCoordsEvent outputEvent = new TrackableObjectCoordsEvent(...);
-        return Collections.singletonList(outputEvent);
-    }
-}
-----
+image::code3.png[width=80%]
+//[source,java,subs="normal"]
+//----
+//public class ObjectCoordsProcessor extends
+//        BaseTransformingEventProcessor<
+//                [blue yellow-background]*TrackableObjectMovementEvent*,
+//                [navy aqua-background]*TrackableObjectCoordsEvent*> {
+//
+//    @Override
+//    protected List<TrackableObjectCoordsEvent> process(
+//            String key,
+//            TrackableObjectMovementEvent inputEvent) {
+//
+//        if (inputEvent.getMovementType() == MovementType.NO_SIGNAL) {
+//            return null;
+//        }
+//
+//        . . .
+//
+//        TrackableObjectCoordsEvent outputEvent = new TrackableObjectCoordsEvent(...);
+//        return Collections.singletonList(outputEvent);
+//    }
+//}
+//----
 
 == StateEventProcessor
-[source,java]
-----
-@Service
-@Scope("prototype")
-public class ObjectMovementProcessor extends
-        BaseTransformingStateEventProcessor<
-                TagMovementEvent, TrackableObjectMovementEvent, ObjectMovementProcessor.TagMovementState> {
-
-    @Override
-    protected List<TrackableObjectMovementEvent> process(
-            String key, TagMovementEvent inputEvent, TagMovementState state) {
-
-        Coordinates newCoords = inputEvent.getCoordinates();
-        if (state == null) {
-            super.updateState(key, new TagMovementState(newCoords));
-            ...
-            return Collections.singletonList(outputEvent);
-        }
-
-        if (getDistance(newCoords, state.getCoordinates()) < 1.0) {
-            return null;
-        }
-
-        state.setCoordinates(newCoords);
-        super.updateState(key, state);
-        ...
-    }
-
-    static class TagMovementState extends EventProcessorState { ... }
-}
-----
+image::code4.png[width=80%]
+//[source,java,subs="normal"]
+//----
+//public class ObjectMovementProcessor extends
+//        BaseTransformingStateEventProcessor<
+//                [blue yellow-background]*TagMovementEvent*,
+//                [navy aqua-background]*TrackableObjectMovementEvent*,
+//                [maroon lime-background]*TagMovementState* > {
+//
+//    @Override
+//    protected List<TrackableObjectMovementEvent> process(
+//            String key, TagMovementEvent inputEvent, TagMovementState state) {
+//        . . .
+//        if (getDistance(inputEvent.getCoordinates(), state.getCoordinates()) < 1.0) {
+//            return null;
+//        }
+//
+//        state.setCoordinates(inputEvent.getCoordinates());
+//        super.updateState(key, state);
+//        . . .
+//    }
+//}
+//----
 
 == BaseStateEventProcessor & EventProcessorState
-[source,java]
-----
-public abstract class BaseStateEventProcessor
-        <EventToProcess extends Event, ProcessorState extends EventProcessorState> {
-
-    protected KeyValueStore<String, ProcessorState> stateStore;
-
-    protected ProcessorState getState(String key) { ... }
-
-    protected void updateState(String key, ProcessorState newState) { ... }
-
-    protected void resetState(String key) { ... }
-}
-
-
-public abstract class EventProcessorState {
-    public long getAge() { ... }
-}
-----
+image::code5.png[width=80%]
+//[source,java,subs="normal"]
+//----
+//public abstract class BaseStateEventProcessor
+//        <EventToProcess extends Event, ProcessorState extends EventProcessorState> {
+//
+//    protected KeyValueStore<String, ProcessorState> *stateStore*;
+//
+//
+//    protected ProcessorState *getState*(String key) { ... }
+//
+//    protected void *updateState*(String key, ProcessorState newState) { ... }
+//
+//    protected void *resetState*(String key) { ... }
+//}
+//
+//
+//public abstract class EventProcessorState {
+//    public long *getAge*() { ... }
+//}
+//----
 
 == Punctuator
-[source,java]
-----
-public class ObjectMovementProcessor extends
-        BaseTransformingStateEventProcessor<
-                TagMovementEvent, TrackableObjectMovementEvent, ObjectMovementProcessor.TagMovementState> {
-
-    /**
-    * NOTE: на время работы пунктуатора обработка событий приостанавливается
-    */
-    @Override
-    protected PunctuatorSupplier getPunctuatorSupplier() {
-        return new PunctuatorSupplier(
-            // время запуска
-            timestamp -> {
-                // перебираем ВСЕ состояния
-                super.stateStore.all().forEachRemaining(item -> {
-                    String key = item.key;
-                    TagMovementState state = item.value;
-
-                    if (state.getAge() <= 30000) {
-                        return;
-                    }
-
-                    TrackableObjectMovementEvent outputEvent = getSignalLostEvent(key, state);
-                    super.sendResultEvent(outputEvent);
-                });
-
-            },
-            // частота запуска (раз в 1 минуту)
-            60000);
-    }
-}
-----
+image::code6.png[width=80%]
+//[source,java,subs="verbatim,quotes"]
+//----
+//public class ObjectMovementProcessor extends
+//        BaseTransformingStateEventProcessor<
+//                TagMovementEvent, TrackableObjectMovementEvent, TagMovementState> {
+//
+//    @Override
+//    protected PunctuatorSupplier getPunctuatorSupplier() {
+//        return new PunctuatorSupplier(
+//            timestamp -> {
+//                super.[blue yellow-background]*stateStore*.all().forEachRemaining(item -> {
+//                    String key = item.key;
+//                    TagMovementState state = item.value;
+//
+//                    if (state.getAge() <= 30000) {
+//                        return;
+//                    }
+//
+//                    TrackableObjectMovementEvent outputEvent = getSignalLostEvent(key, state);
+//                    super.[blue yellow-background]*sendResultEvent*(outputEvent);
+//                });
+//
+//            },
+//            60000); // частота запуска
+//    }
+//}
+//----
 
 == EventProcessorRunner
-[source,java]
-----
-@EnableEventProcessorRunner
-public class Application {
-    public static void main(String[] args) {
-        SpringApplication.run(Application.class, args);
-    }
-}
-----
+image::code7.png[width=55%]
+//[source,java,subs="normal"]
+//----
+//[blue yellow-background]*@EnableEventProcessorRunner*
+//public class Application {
+//
+//    public static void main(String[] args) {
+//
+//        SpringApplication.run(Application.class, args);
+//
+//    }
+//}
+//----
 
 [%step]
 * Находит все процессоры
@@ -362,4 +357,4 @@ public class Application {
 ** для взаимодействия модулей
 ** для потоковой обработки данных
 ** в Event Sourcing архитектуре
-* **Можно использовать наработки проекта ''Цифровой рабочий''**
+* *Можно использовать наработки проекта ''Цифровой рабочий''*
