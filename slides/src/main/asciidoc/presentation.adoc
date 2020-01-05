@@ -144,7 +144,7 @@ image::code3.png[width=80%]
 //                [navy aqua-background]*TrackableObjectCoordsEvent*> {
 //
 //    @Override
-//    protected List<TrackableObjectCoordsEvent> process(
+//    protected List<TrackableObjectCoordsEvent> processEvent(
 //            String key,
 //            TrackableObjectMovementEvent inputEvent) {
 //
@@ -171,7 +171,7 @@ image::code4.png[width=80%]
 //                [maroon lime-background]*TagMovementState* > {
 //
 //    @Override
-//    protected List<TrackableObjectMovementEvent> process(
+//    protected List<TrackableObjectMovementEvent> processEvent(
 //            String key, TagMovementEvent inputEvent, TagMovementState state) {
 //        . . .
 //        if (getDistance(inputEvent.getCoordinates(), state.getCoordinates()) < 1.0) {

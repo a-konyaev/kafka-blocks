@@ -22,7 +22,7 @@ public abstract class BaseTransformingEventProcessor
         super();
 
         Class<?>[] types = GenericTypeResolver.resolveTypeArguments(getClass(), BaseTransformingEventProcessor.class);
-        resultEventType = (Class<ResultEvent>)types[1];
+        resultEventType = (Class<ResultEvent>) types[1];
     }
 
     @Override
@@ -36,7 +36,7 @@ public abstract class BaseTransformingEventProcessor
 
         List<ResultEvent> resList;
         try {
-            resList = process(key, eventToProcess);
+            resList = processEvent(key, eventToProcess);
         } catch (Exception e) {
             logger.error("Event processing failed", e);
             return null;
@@ -58,7 +58,7 @@ public abstract class BaseTransformingEventProcessor
      * @param eventToProcess событие, которое нужно обработать
      * @return список результирующих событий или null, если результат обработки не требует выдавать выходные события
      */
-    protected abstract List<ResultEvent> process(String key, EventToProcess eventToProcess);
+    protected abstract List<ResultEvent> processEvent(String key, EventToProcess eventToProcess);
 
     /**
      * Отправить результирующее событие в выходной топик

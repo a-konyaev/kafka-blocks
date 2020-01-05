@@ -52,7 +52,7 @@ public abstract class BaseTransformingStateEventProcessor
 
         List<ResultEvent> resList;
         try {
-            resList = process(key, eventToProcess, state);
+            resList = processEvent(key, eventToProcess, state);
         } catch (Exception e) {
             logger.error("Event processing failed", e);
             return null;
@@ -75,7 +75,7 @@ public abstract class BaseTransformingStateEventProcessor
      * @param state          состояние, которое хранится для ключа события. Если состояние еще не определено, то null.
      * @return список результирующих событий или null, если результат обработки не требует выдавать выходные события
      */
-    protected abstract List<ResultEvent> process(String key, EventToProcess eventToProcess, ProcessorState state);
+    protected abstract List<ResultEvent> processEvent(String key, EventToProcess eventToProcess, ProcessorState state);
 
     /**
      * Отправить результирующее событие в выходной топик

@@ -16,7 +16,7 @@ import java.util.List;
 public class AccelerationProcessor extends BaseTransformingEventProcessor<DistanceEvent, AccelerationEvent> {
 
     @Override
-    protected List<AccelerationEvent> process(String key, DistanceEvent distanceEvent) {
+    protected List<AccelerationEvent> processEvent(String key, DistanceEvent distanceEvent) {
         return null;
     }
 }
