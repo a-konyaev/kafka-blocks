@@ -1,0 +1,328 @@
+= Kafka: некоторые интересные практики
+:revealjs_theme: black
+:revealjs_customtheme: theme.css
+:revealjs_slideNumber:
+:revealjs_history:
+:revealjs_progress:
+:encoding: UTF-8
+:lang: ru
+include::_doc_general_attributes.adoc[]
+:doctype: article
+:toclevels: 3
+:imagesdir: images
+:source-highlighter: highlightjs
+:highlightjsdir: highlight
+:icons: font
+:iconfont-remote!:
+:iconfont-name: font-awesome-4.7.0/css/font-awesome
+:revealjs_mouseWheel: true
+:revealjs_center: false
+:revealjs_transition: none
+:revealjs_width: 1600
+:revealjs_height: 900
+
+:!figure-caption:
+
+Алексей Коняев, akonyaev@croc.ru
+
+[%notitle]
+== Истории создания и развития
+
+[cols="50a,50a",frame=none,grid=none]
+|===
+.^|
+[%step]
+* 2011 - LinkedIn передал в open-source
+* 2014 - Создана компания Confluent
+* 2019 - Release 2.4.0
+.^|image::kafka_logo.png[]
+
+[big]##Горизонтально-масштабируемая#
+
+[big]##Быстрая#
+
+[big]##Отказоустойчивая#
+|===
+
+== Как устроена
+
+[cols="30a,70a",frame=none,grid=none]
+|===
+|
+* Event log
+** key
+** body
+** timestamp
+* Topic
+** offset
+** partitions
+** replication-factor
+** retention
+* Producer & Consumer
+* Exactly-once semantics
+|image::kafka_anatomy.png[]
+|===
+
+//== 1 партиция -- 1 группа с 1 потребителем
+//image::kafka_consumer_0.png[width=40%]
+//
+//== N партиций -- 1 группа с 1 потребителем
+//image::kafka_consumer_1.png[width=40%]
+//
+//== N партиций -- Несколько групп по M потребителей (M &le; N)
+//image::kafka_consumer_2.png[width=40%]
+//
+//== N партиций -- 1 группа с M потребителем (M > N)
+//image::kafka_consumer_3.png[width=40%]
+//
+//== Очередность получения событий сохраняется
+//* В рамках партиции
+//* Для событий с одинаковым ключом
+//
+//image::kafka_consumer_4.png[width=50%]
+
+== Цифровой рабочий
+
+[cols="30a,70a",frame=none,grid=none]
+|===
+.^|
+* Носимые технологии
+* Позиционирование IN/OUT-DOOR
+* Работа в режиме реального времени
+* Обработка до 1.5М событий в секунду
+.^|image::digital_worker.png[]
+|===
+
+== Архитектура
+image::dw_architecture.jpg[width=75%]
+
+== Топология
+image::dw_topology.jpg[width=75%]
+
+== Идеология
+
+* Для каждого класса события существует ровно один топик
+* Тип ключа - String
+
+image::code1.png[width=60%]
+//{nbsp}
+//[source,yaml,subs="normal"]
+//----
+//croc.kafka:
+//  eventTopic:
+//
+//    _MyEventClass_: _topic-name-for-my-event_
+//
+//    TagMovementEvent: tag-movement
+//    TrackableObjectMovementEvent: object-movement
+//    TagLinkEvent: tag-link
+//----
+
+== TerminalEventProcessor
+image::code2.png[width=75%]
+//[source,java,subs="normal"]
+//----
+//public class TagUnlinkProcessor extends
+//        BaseTerminalEventProcessor< [blue yellow-background]*TagLinkEvent* > {
+//
+//    @Override
+//    protected void processEvent(String key, TagLinkEvent inputEvent) {
+//
+//        . . .
+//
+//    }
+//}
+//----
+
+== TransformingEventProcessor
+image::code3.png[width=80%]
+//[source,java,subs="normal"]
+//----
+//public class ObjectCoordsProcessor extends
+//        BaseTransformingEventProcessor<
+//                [blue yellow-background]*TrackableObjectMovementEvent*,
+//                [navy aqua-background]*TrackableObjectCoordsEvent*> {
+//
+//    @Override
+//    protected List<TrackableObjectCoordsEvent> processEvent(
+//            String key,
+//            TrackableObjectMovementEvent inputEvent) {
+//
+//        if (inputEvent.getMovementType() == MovementType.NO_SIGNAL) {
+//            return null;
+//        }
+//
+//        . . .
+//
+//        TrackableObjectCoordsEvent outputEvent = new TrackableObjectCoordsEvent(...);
+//        return Collections.singletonList(outputEvent);
+//    }
+//}
+//----
+
+== StateEventProcessor
+image::code4.png[width=80%]
+//[source,java,subs="normal"]
+//----
+//public class ObjectMovementProcessor extends
+//        BaseTransformingStateEventProcessor<
+//                [blue yellow-background]*TagMovementEvent*,
+//                [navy aqua-background]*TrackableObjectMovementEvent*,
+//                [maroon lime-background]*TagMovementState* > {
+//
+//    @Override
+//    protected List<TrackableObjectMovementEvent> processEvent(
+//            String key, TagMovementEvent inputEvent, TagMovementState state) {
+//        . . .
+//        if (getDistance(inputEvent.getCoordinates(), state.getCoordinates()) < 1.0) {
+//            return null;
+//        }
+//
+//        state.setCoordinates(inputEvent.getCoordinates());
+//        super.updateState(key, state);
+//        . . .
+//    }
+//}
+//----
+
+== BaseStateEventProcessor & EventProcessorState
+image::code5.png[width=80%]
+//[source,java,subs="normal"]
+//----
+//public abstract class BaseStateEventProcessor
+//        <EventToProcess extends Event, ProcessorState extends EventProcessorState> {
+//
+//    protected KeyValueStore<String, ProcessorState> *stateStore*;
+//
+//
+//    protected ProcessorState *getState*(String key) { ... }
+//
+//    protected void *updateState*(String key, ProcessorState newState) { ... }
+//
+//    protected void *resetState*(String key) { ... }
+//}
+//
+//
+//public abstract class EventProcessorState {
+//    public long *getAge*() { ... }
+//}
+//----
+
+== Punctuator
+image::code6.png[width=80%]
+//[source,java,subs="verbatim,quotes"]
+//----
+//public class ObjectMovementProcessor extends
+//        BaseTransformingStateEventProcessor<
+//                TagMovementEvent, TrackableObjectMovementEvent, TagMovementState> {
+//
+//    @Override
+//    protected PunctuatorSupplier getPunctuatorSupplier() {
+//        return new PunctuatorSupplier(
+//            timestamp -> {
+//                super.[blue yellow-background]*stateStore*.all().forEachRemaining(item -> {
+//                    String key = item.key;
+//                    TagMovementState state = item.value;
+//
+//                    if (state.getAge() <= 30000) {
+//                        return;
+//                    }
+//
+//                    TrackableObjectMovementEvent outputEvent = getSignalLostEvent(key, state);
+//                    super.[blue yellow-background]*sendResultEvent*(outputEvent);
+//                });
+//
+//            },
+//            60000); // частота запуска
+//    }
+//}
+//----
+
+== EventProcessorRunner
+image::code7.png[width=55%]
+//[source,java,subs="normal"]
+//----
+//[blue yellow-background]*@EnableEventProcessorRunner*
+//public class Application {
+//
+//    public static void main(String[] args) {
+//
+//        SpringApplication.run(Application.class, args);
+//
+//    }
+//}
+//----
+
+[%step]
+* Находит все процессоры
+* Автоматически строит топологию
+* Проверяет наличие топиков
+
+//== Поднимаем в Docker: docker-compose.yaml
+//[source,yaml]
+//----
+//version: '2.4'
+//services:
+//
+//  zookeeper:
+//    image: wurstmeister/zookeeper
+//    ports:
+//      - "2181:2181"
+//
+//  kafka:
+//    image: wurstmeister/kafka
+//    depends_on:
+//      - zookeeper
+//    ports:
+//      - "9092:9092"
+//    environment:
+//      KAFKA_LISTENERS: PLAINTEXT://kafka:9092
+//      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+//      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+//      KAFKA_CREATE_TOPICS: >-
+//        position:1:1,
+//        distance:1:1,
+//        speed:1:1,
+//        acceleration:1:1
+//----
+//== Подключаемся из приложения: application.yml
+//{nbsp}
+//[source,yaml]
+//----
+//spring.kafka:
+//  bootstrap-servers: kafka:9092
+//----
+//{nbsp}
+//{nbsp}
+//
+//Для отладки с локального хоста
+//{nbsp}
+//[source,text]
+//----
+//c:\Windows\System32\drivers\etc\hosts
+//
+//127.0.0.1 kafka
+//----
+//
+
+
+== Что ещё интересного
+
+[%step]
+* Как поднять в Docker
+* Публикация событий c `KafkaPublisher`
+* Потребление событий c `KafkaConsumer`
+** подписка на события
+** режим _Машины времени_
+* Интеграция с
+** Esper
+** Clickhouse
+
+== Итоги
+[%step]
+* Kafka легко принести в свой проект
+* Kafka подходит
+** для взаимодействия модулей
+** для потоковой обработки данных
+** в Event Sourcing архитектуре
+* *Можно использовать наработки проекта ''Цифровой рабочий''*
