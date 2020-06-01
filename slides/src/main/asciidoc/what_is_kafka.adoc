@@ -113,6 +113,8 @@ image::kafka_consumer_4.png[1000,800]
 
 == 2. Задачи, в которых применима Kafka
 
+//todo найти картинку
+
 === Queue
 
 * с одной стороны создают "задания"
@@ -201,7 +203,70 @@ image::changelog.gif[]
 
 image::streams-interactive-queries.png[]
 
-== 3. Отладка и тестирование
+== 3. Kafka API
+
+//todo найти картинку
+
+=== Consumer API
+
+=== Producer API
+
+=== Streams API
+
+== 4. Spring Kafka
+
+//todo найти картинку
+
+=== Configuration
+application.yml
+[source,yaml]
+----
+spring.kafka:
+  bootstrap-servers: localhost:9092
+----
+
+//TODO: программная конфигурация
+
+=== Producer
+[source,java]
+----
+@Bean
+public KafkaTemplate<String, Event> kafkaTemplate(
+        ProducerFactory<String, Event> factory, ObjectMapper mapper) {
+    factory.setKeySerializer(new StringSerializer());
+    factory.setValueSerializer(new JsonSerializer<>(mapper));
+    return new KafkaTemplate<>(factory);
+}
+
+
+kafkaTemplate.send(topic, eventKey, event);
+----
+=== Consumer
+[source,java]
+----
+@KafkaListener(id = "myConsumerGroup", topics = "myTopic")
+public void listen(String message) {
+    ...
+}
+
+@KafkaListener(id = "pollResults", topics = "myTopic", containerFactory = "batchFactory")
+public void pollResults(ConsumerRecords<?, ?> records) {
+    ...
+}
+
+@KafkaListener(id = "listMsgAckConsumer", topics = "myTopic", containerFactory = "batchFactory")
+void listenWithManualCommits(List<Message<?>> list, Acknowledgment ack, Consumer<?, ?> consumer) {
+    ...
+}
+----
+
+=== Streams
+
+//TODO
+
+== 5. Отладка и тестирование
+
+//todo найти картинку
 
 === Поднимаем в Docker
 docker-compose.yaml
@@ -274,48 +339,10 @@ image::conductor.png[]
 * собирать и запускать тесты в докере, поднимая в соседнем контейнере кафку
 * TopologyTestDriver - для тестирования KafkaStream приложений
 
-== 4. Spring Kafka
-application.yml
-[source,yaml]
-----
-spring.kafka:
-  bootstrap-servers: localhost:9092
-----
-
-=== Producer
-[source,java]
-----
-@Bean
-public KafkaTemplate<String, Event> kafkaTemplate(
-        ProducerFactory<String, Event> factory, ObjectMapper mapper) {
-    factory.setKeySerializer(new StringSerializer());
-    factory.setValueSerializer(new JsonSerializer<>(mapper));
-    return new KafkaTemplate<>(factory);
-}
-
-
-kafkaTemplate.send(topic, eventKey, event);
-----
-=== Consumer
-[source,java]
-----
-@KafkaListener(id = "myConsumerGroup", topics = "myTopic")
-public void listen(String message) {
-    ...
-}
-
-@KafkaListener(id = "pollResults", topics = "myTopic", containerFactory = "batchFactory")
-public void pollResults(ConsumerRecords<?, ?> records) {
-    ...
-}
-
-@KafkaListener(id = "listMsgAckConsumer", topics = "myTopic", containerFactory = "batchFactory")
-void listenWithManualCommits(List<Message<?>> list, Acknowledgment ack, Consumer<?, ?> consumer) {
-    ...
-}
-----
-
 == Ссылки
+
+//todo найти картинку
+
 * http://kafka.apache.org/documentation
 * http://kafka-tutorials.confluent.io
 * http://docs.spring.io/spring-kafka/docs/2.5.0.RELEASE/reference/html/#kafka
