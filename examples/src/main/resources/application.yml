@@ -6,7 +6,7 @@ logging.level:
   root: WARN
   org.springframework: WARN
   org.apache.kafka: WARN
-  kafkablocks: DEBUG
+  kafkablocks: INFO
 
 spring.kafka:
   bootstrap-servers: kafka:9092
