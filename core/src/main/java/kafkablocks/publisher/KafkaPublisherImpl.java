@@ -73,7 +73,7 @@ public class KafkaPublisherImpl implements KafkaPublisher {
 
         String topic = eventTopicProperties.resolveTopicByEvent(event);
 
-        UUID id = event.getId();
+        String id = event.getId();
         logger.debug("[{}] Sending event to topic '{}': {}", id, topic, event);
 
         // TODO: проанализировать результат и вернуть из текущего метода признак успешности отправки сообщения

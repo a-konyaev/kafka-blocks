@@ -14,12 +14,12 @@ import java.util.UUID;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString
+@ToString(callSuper = true)
 public abstract class BaseEvent implements Event {
     /**
      * Уникальный идентификатор события
      */
-    private final UUID id = UUID.randomUUID();
+    private final String id = UUID.randomUUID().toString();
     /**
      * Время наступления события
      * По умолчанию - текущее время в дефолтной временной зоне

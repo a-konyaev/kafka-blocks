@@ -12,7 +12,7 @@ public interface Event {
     /**
      * Уникальный идентификатор
      */
-    UUID getId();
+    String getId();
 
     /**
      * Время регистрации события

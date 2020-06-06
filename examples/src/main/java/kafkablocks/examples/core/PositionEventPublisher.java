@@ -1,4 +1,4 @@
-package kafkablocks.examples;
+package kafkablocks.examples.core;
 
 import kafkablocks.ServiceBase;
 import kafkablocks.concurrent.WaitHandle;

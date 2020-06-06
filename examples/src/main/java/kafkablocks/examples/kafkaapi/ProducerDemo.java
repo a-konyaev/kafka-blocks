@@ -3,7 +3,8 @@ package kafkablocks.examples.kafkaapi;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kafkablocks.events.Event;
-import kafkablocks.examples.events.PositionEvent;
+import kafkablocks.examples.events.PositionEventGenerator;
+import kafkablocks.examples.events.WalkingByCirclePositionEventGenerator;
 import kafkablocks.utils.ObjectMapperUtils;
 import kafkablocks.utils.ThreadUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -18,19 +19,23 @@ import org.apache.kafka.common.serialization.StringSerializer;
 
 import java.util.Collections;
 import java.util.Properties;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 @Slf4j
 public class ProducerDemo {
-    private static final String TOPIC = "position";
-    private final ObjectMapper mapper = ObjectMapperUtils.createWithDefaultDTFormatters();
-    private final String objectId = UUID.randomUUID().toString();
-    private int step = 0;
+    public static final String TOPIC = "kafka-api-position";
+
+    private final ObjectMapper mapper;
+    private final PositionEventGenerator positionEventGenerator;
 
     public static void main(String[] args) {
         var producer = new ProducerDemo();
         producer.run();
+    }
+
+    public ProducerDemo() {
+        mapper = ObjectMapperUtils.createWithDefaultDTFormatters();
+        positionEventGenerator = new WalkingByCirclePositionEventGenerator();
     }
 
     public void run() {
@@ -39,7 +44,7 @@ public class ProducerDemo {
         Producer<String, String> producer = new KafkaProducer<>(props);
 
         for (int i = 0; i < 1000; i++) {
-            var event = getPositionEvent();
+            var event = positionEventGenerator.getNextEvent();
             var record = getProducerRecord(event);
             var future = producer.send(record); // Async! adds the record to the buffer
             log.info("event published: {}", event);
@@ -55,7 +60,7 @@ public class ProducerDemo {
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         props.put(ProducerConfig.ACKS_CONFIG, "1"); // wait confirmation from the leader only
 
-        props.put(ProducerConfig.BATCH_SIZE_CONFIG, 10*1024); // max size to flush (default = 16Kb)
+        props.put(ProducerConfig.BATCH_SIZE_CONFIG, 10 * 1024); // max size to flush (default = 16Kb)
         props.put(ProducerConfig.LINGER_MS_CONFIG, 300_000); // max time to flush (default = 0)
         return props;
     }
@@ -71,16 +76,6 @@ public class ProducerDemo {
             }
             throw new RuntimeException(e);
         }
-    }
-
-    public PositionEvent getPositionEvent() {
-        final double radius = 10;
-        final double speed = 1.0;
-
-        double radians = Math.PI / 180 * (++step) * speed;
-        int x = (int) Math.round(radius * Math.sin(radians));
-        int y = (int) Math.round(radius * Math.cos(radians));
-        return new PositionEvent(objectId, x, y);
     }
 
     public ProducerRecord<String, String> getProducerRecord(Event event) {

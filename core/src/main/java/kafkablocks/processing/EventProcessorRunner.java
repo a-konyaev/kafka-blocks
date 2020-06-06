@@ -51,7 +51,7 @@ public class EventProcessorRunner extends ServiceBase {
     @Override
     protected void shutdown() {
         //'kafkaStreams is null' is possible in case of initialization failure in the init() method
-        if (kafkaStreams != null && kafkaStreams.state().isRunning()) {
+        if (kafkaStreams != null && kafkaStreams.state().isRunningOrRebalancing()) {
             kafkaStreams.close();
         }
     }

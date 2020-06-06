@@ -4,18 +4,18 @@ spring.main:
 
 logging.level:
   root: WARN
-  org.springframework: WARN
-  org.apache.kafka: WARN
+  org.springframework: INFO
+  org.apache.kafka: INFO
   kafkablocks: INFO
 
 spring.kafka:
   bootstrap-servers: kafka:9092
-  streams:
-    application-id: examples-consumer-group
-    cache-max-size-buffering: 0
   consumer:
     auto-offset-reset: latest
     properties.spring.json.trusted.packages: "*"
+  streams:
+    application-id: examples-consumer-group
+    cache-max-size-buffering: 0
 
 kafkablocks:
   #processing.streams-thread-number: 2
@@ -26,4 +26,7 @@ kafkablocks:
     SpeedEvent: speed
     AccelerationEvent: acceleration
 
-  #examples.publisherCount: 10
+  examples:
+    springkafka:
+      producer.interval: 200
+

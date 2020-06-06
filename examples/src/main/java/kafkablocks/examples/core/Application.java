@@ -1,4 +1,4 @@
-package kafkablocks.examples;
+package kafkablocks.examples.core;
 
 import kafkablocks.processing.EnableEventProcessorRunner;
 import kafkablocks.publisher.KafkaPublisherImpl;

@@ -1,4 +1,4 @@
-package kafkablocks.examples.processing;
+package kafkablocks.examples.core.processing;
 
 import lombok.RequiredArgsConstructor;
 import kafkablocks.examples.events.PositionEvent;

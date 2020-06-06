@@ -13,7 +13,6 @@ import java.util.Properties;
 
 @Slf4j
 public class ConsumerDemo {
-    private static final String TOPIC = "position";
 
     public static void main(String[] args) {
         var consumer = new ConsumerDemo();
@@ -22,16 +21,16 @@ public class ConsumerDemo {
 
     public void run() {
         var props = getProperties();
-        KafkaUtils.ensureTopicsExist(props, Collections.singleton(TOPIC), 10);
+        var topics = Collections.singleton(ProducerDemo.TOPIC);
+        KafkaUtils.ensureTopicsExist(props, topics, 10);
 
         KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props);
-        consumer.subscribe(Collections.singleton(TOPIC));
+        consumer.subscribe(topics);
 
         try {
             while (true) {
-                ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(1000));
-                for (var record : records)
-                {
+                ConsumerRecords<String, String> records = consumer.poll(Duration.ofSeconds(1));
+                for (var record : records) {
                     log.info("[{}] {} -> {}", record.offset(), record.key(), record.value());
                 }
             }
@@ -43,7 +42,7 @@ public class ConsumerDemo {
     private Properties getProperties() {
         Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "test-consumer");
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, "kafka-api-consumer");
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"); //default = latest
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
