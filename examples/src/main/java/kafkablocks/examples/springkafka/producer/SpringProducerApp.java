@@ -16,11 +16,11 @@ import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
 @SpringBootApplication
-public class ProducerApp {
+public class SpringProducerApp {
     public static final String TOPIC = "spring-kafka-position";
 
     public static void main(String[] args) {
-        SpringApplication.run(ProducerApp.class, args);
+        SpringApplication.run(SpringProducerApp.class, args);
     }
 
     @Bean

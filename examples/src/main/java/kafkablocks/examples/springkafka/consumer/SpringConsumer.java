@@ -13,20 +13,20 @@ import java.util.List;
 
 @Component
 @Slf4j
-public class Consumer {
+public class SpringConsumer {
 
-    @KafkaListener(id = "spring-kafka-consumer", topics = "spring-kafka-position")
+    //@KafkaListener(id = "spring-kafka-consumer", topics = "spring-kafka-position")
     public void listen(String message) {
         log.info("message: {}", message);
     }
 
     //region fine-tuning
 
-    //@KafkaListener(id = "spring-kafka-consumer", topics = "spring-kafka-position", containerFactory = "myFactory")
+    @KafkaListener(id = "spring-kafka-consumer", topics = "spring-kafka-position", containerFactory = "myFactory")
     public void pollEvents(ConsumerRecords<String, PositionEvent> records) {
         log.info("Batch size = {}", records.count());
         for (ConsumerRecord<String, PositionEvent> record : records) {
-            // record.value().getClass() = java.lang.String !!!
+            process(record.value());  // runtime error! record.value() - String!
             logRecord(record, "ok");
         }
         ThreadUtils.safeDelaySec(1);
@@ -34,6 +34,10 @@ public class Consumer {
 
     private void logRecord(ConsumerRecord<String, PositionEvent> record, String prefix) {
         log.info("{} [{}-{}] {} -> {}", prefix, record.partition(), record.offset(), record.key(), record.value());
+    }
+
+    private void process(PositionEvent value) {
+        ThreadUtils.safeDelay(300); // processing...
     }
 
     //region Acknowledgment
@@ -50,8 +54,8 @@ public class Consumer {
                     throw new RuntimeException("It is enough! No more than three on one!");
                 }
 
+                process(record.value());
                 logRecord(record, "ok");
-                ThreadUtils.safeDelay(300); // working...
             }
         } catch (RuntimeException e) {
             // Error - commit only processed records, others will be consume again after 1 sec

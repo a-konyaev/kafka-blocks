@@ -15,14 +15,14 @@ import org.springframework.util.concurrent.ListenableFutureCallback;
 @RequiredArgsConstructor
 @Slf4j
 @EnableScheduling
-public class Producer {
+public class SpringProducer {
     private final KafkaTemplate<String, Event> kafkaTemplate;
     private final PositionEventGenerator positionEventGenerator;
 
     @Scheduled(fixedDelayString = "${kafkablocks.examples.springkafka.producer.interval}")
     private void run() {
         var event = positionEventGenerator.getNextEvent();
-        var future = kafkaTemplate.send(ProducerApp.TOPIC, event.getKey(), event);
+        var future = kafkaTemplate.send(SpringProducerApp.TOPIC, event.getKey(), event);
 
         future.addCallback(new ListenableFutureCallback<>() {
             @Override
