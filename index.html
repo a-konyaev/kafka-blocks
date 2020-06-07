@@ -1,0 +1,305 @@
+<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8" /><title>Kafka – шина, очередь или БД?</title><meta content="yes" name="apple-mobile-web-app-capable" /><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style" /><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui" name="viewport" /><link href="reveal.js-3.5.0/css/reveal.css" rel="stylesheet" /><link rel="stylesheet" href="theme.css" id="theme" /><link rel="stylesheet" href="./font-awesome-4.7.0/css/font-awesome.css" /><style>/* Stylesheet for CodeRay to match GitHub theme | MIT License | http://foundation.zurb.com */
+/*pre.CodeRay {background-color:#f7f7f8;}*/
+.CodeRay .line-numbers{border-right:1px solid #d8d8d8;padding:0 0.5em 0 .25em}
+.CodeRay span.line-numbers{display:inline-block;margin-right:.5em;color:rgba(0,0,0,.3)}
+.CodeRay .line-numbers strong{color:rgba(0,0,0,.4)}
+table.CodeRay{border-collapse:separate;border-spacing:0;margin-bottom:0;border:0;background:none}
+table.CodeRay td{vertical-align: top;line-height:1.45}
+table.CodeRay td.line-numbers{text-align:right}
+table.CodeRay td.line-numbers>pre{padding:0;color:rgba(0,0,0,.3)}
+table.CodeRay td.code{padding:0 0 0 .5em}
+table.CodeRay td.code>pre{padding:0}
+.CodeRay .debug{color:#fff !important;background:#000080 !important}
+.CodeRay .annotation{color:#007}
+.CodeRay .attribute-name{color:#000080}
+.CodeRay .attribute-value{color:#700}
+.CodeRay .binary{color:#509}
+.CodeRay .comment{color:#998;font-style:italic}
+.CodeRay .char{color:#04d}
+.CodeRay .char .content{color:#04d}
+.CodeRay .char .delimiter{color:#039}
+.CodeRay .class{color:#458;font-weight:bold}
+.CodeRay .complex{color:#a08}
+.CodeRay .constant,.CodeRay .predefined-constant{color:#008080}
+.CodeRay .color{color:#099}
+.CodeRay .class-variable{color:#369}
+.CodeRay .decorator{color:#b0b}
+.CodeRay .definition{color:#099}
+.CodeRay .delimiter{color:#000}
+.CodeRay .doc{color:#970}
+.CodeRay .doctype{color:#34b}
+.CodeRay .doc-string{color:#d42}
+.CodeRay .escape{color:#666}
+.CodeRay .entity{color:#800}
+.CodeRay .error{color:#808}
+.CodeRay .exception{color:inherit}
+.CodeRay .filename{color:#099}
+.CodeRay .function{color:#900;font-weight:bold}
+.CodeRay .global-variable{color:#008080}
+.CodeRay .hex{color:#058}
+.CodeRay .integer,.CodeRay .float{color:#099}
+.CodeRay .include{color:#555}
+.CodeRay .inline{color:#000}
+.CodeRay .inline .inline{background:#ccc}
+.CodeRay .inline .inline .inline{background:#bbb}
+.CodeRay .inline .inline-delimiter{color:#d14}
+.CodeRay .inline-delimiter{color:#d14}
+.CodeRay .important{color:#555;font-weight:bold}
+.CodeRay .interpreted{color:#b2b}
+.CodeRay .instance-variable{color:#008080}
+.CodeRay .label{color:#970}
+.CodeRay .local-variable{color:#963}
+.CodeRay .octal{color:#40e}
+.CodeRay .predefined{color:#369}
+.CodeRay .preprocessor{color:#579}
+.CodeRay .pseudo-class{color:#555}
+.CodeRay .directive{font-weight:bold}
+.CodeRay .type{font-weight:bold}
+.CodeRay .predefined-type{color:inherit}
+.CodeRay .reserved,.CodeRay .keyword {color:#000;font-weight:bold}
+.CodeRay .key{color:#808}
+.CodeRay .key .delimiter{color:#606}
+.CodeRay .key .char{color:#80f}
+.CodeRay .value{color:#088}
+.CodeRay .regexp .delimiter{color:#808}
+.CodeRay .regexp .content{color:#808}
+.CodeRay .regexp .modifier{color:#808}
+.CodeRay .regexp .char{color:#d14}
+.CodeRay .regexp .function{color:#404;font-weight:bold}
+.CodeRay .string{color:#d20}
+.CodeRay .string .string .string{background:#ffd0d0}
+.CodeRay .string .content{color:#d14}
+.CodeRay .string .char{color:#d14}
+.CodeRay .string .delimiter{color:#d14}
+.CodeRay .shell{color:#d14}
+.CodeRay .shell .delimiter{color:#d14}
+.CodeRay .symbol{color:#990073}
+.CodeRay .symbol .content{color:#a60}
+.CodeRay .symbol .delimiter{color:#630}
+.CodeRay .tag{color:#008080}
+.CodeRay .tag-special{color:#d70}
+.CodeRay .variable{color:#036}
+.CodeRay .insert{background:#afa}
+.CodeRay .delete{background:#faa}
+.CodeRay .change{color:#aaf;background:#007}
+.CodeRay .head{color:#f8f;background:#505}
+.CodeRay .insert .insert{color:#080}
+.CodeRay .delete .delete{color:#800}
+.CodeRay .change .change{color:#66f}
+.CodeRay .head .head{color:#f4f}</style><link href="reveal.js-3.5.0/lib/css/zenburn.css" rel="stylesheet" /><script>var link = document.createElement( 'link' );
+link.rel = 'stylesheet';
+link.type = 'text/css';
+link.href = window.location.search.match( /print-pdf/gi ) ? "reveal.js-3.5.0/css/print/pdf.css" : "reveal.js-3.5.0/css/print/paper.css";
+document.getElementsByTagName( 'head' )[0].appendChild( link );</script><!--[if lt IE 9]><script src="reveal.js-3.5.0/lib/js/html5shiv.js"></script><![endif]--></head><body><div class="reveal"><div class="slides"><section class="title" data-state="title"><h1>Kafka – шина, очередь или БД?</h1><div class="preamble"><div class="imageblock" style=""><img src="images/what_is_kafka/kafka_logo.png" alt="kafka logo" /></div>
+<div class="paragraph"><p>Алексей Коняев, <a href="mailto:akonyaev@croc.ru">akonyaev@croc.ru</a></p></div></div></section>
+<section><section id="kafka"><h2>1. Как устроена Kafka</h2><div class="imageblock" style=""><img src="images/what_is_kafka/under_the_hood.png" alt="under the hood" /></div></section><section id="kafka_cluster"><h2>Kafka cluster</h2><table class="tableblock frame-none grid-none" style="width:100%"><colgroup><col style="width:40%" /><col style="width:60%" /></colgroup><tbody><tr><td class="tableblock halign-left valign-top"><div><div class="ulist"><ul><li><p>Брокеры (+ZooKeeper)</p><div class="ulist"><ul><li><p>Один выбирается на роль Контроллера (может быть переизбран)</p></li><li><p>Чтобы подключиться к кластеру достаточно указать адрес любого брокера (kafka:9092)</p></li></ul></div></li><li><p>Producer</p></li><li><p>Consumer</p></li></ul></div></div></td><td class="tableblock halign-left valign-top"><div><div class="imageblock" style=""><img src="images/what_is_kafka/kafka_arc.png" alt="1100" width="900" /></div></div></td></tr></table></section><section id=""><h2>Топики</h2><div class="ulist"><ul><li class="fragment"><p>Определяется именем</p></li><li class="fragment"><p>Разделен на партиции - "Единица параллелизма" (num.partitions = 1)</p><div class="ulist"><ul><li><p>Для каждой партиции свой брокер-лидер, остальные In-Sync-Replicas (ISR)</p></li></ul></div></li><li class="fragment"><p>Бинарный файл на брокере (разделен на сегменты, путь к папке задан в log.dirs)</p></li><li class="fragment"><p>Имеет реплики (replication.factor = 1, рекомендуется &gt;= 3)</p></li><li class="fragment"><p><em>Подрезается</em> с конца</p><div class="ulist"><ul><li><p>по времени жизни (retention.ms = 7 дней)</p></li><li><p>по размеру (retention.bytes = -1)</p></li></ul></div></li><li class="fragment"><p>Внутри топика сообщения</p><div class="ulist"><ul><li><p>Бинарные ключ и значение</p></li><li><p>Offset внутри партиции - порядковый номер</p></li><li><p>Timestamp - по умолчанию CreateTime (ещё есть LogAppendTime)</p></li><li><p>Заголовки - список пар ключ-значение (String-byte[])</p></li></ul></div></li></ul></div></section><section id="producer"><h2>Producer</h2><div class="ulist"><ul><li class="fragment"><p>Сериализует ключ и значение сообщения</p></li><li class="fragment"><p>Определяет номер партиции</p><div class="ulist"><ul><li><p>по умолчанию DefaultPartitioner = hash(key)%num_partitions</p></li><li><p>можно задать другой (например, RoundRobinPartitioner или свою реализацию)</p></li></ul></div></li><li class="fragment"><p>Ожидает подтверждения записи (acks):</p><div class="ulist"><ul><li><p>0 - не ждать, будь что будет</p></li><li><p>1 - брокер-лидер для данного топика подтвердил запись</p></li><li><p>all - все реплики подтвердили запись</p></li></ul></div></li><li class="fragment"><p>Максимальный размер сообщения по умолчанию 1Mb (message.max.bytes)</p><div class="ulist"><ul><li><p>можно увеличить, но осторожно!</p></li><li><p>можно включить сжатие (gzip, snappy, lz4, zstd)</p></li><li><p>делить на куски или хранить во внешнем хранилище, а в Kafka - ссылки</p></li></ul></div></li><li class="fragment"><p>Использует батчи (batch.size = 16Kb, linger.ms = 0)</p></li></ul></div></section><section id="consumer"><h2>Consumer</h2><div class="ulist"><ul><li class="fragment"><p>Десериализует ключ и значение сообщения</p></li><li class="fragment"><p>Объединяются в группы (group.id)</p><div class="ulist"><ul><li><p>Потребители из одной группы распределяют партиции между собой</p></li><li><p>Координация выполняется с помощью "Kafka Rebalance Protocol"</p><div class="ulist"><ul><li><p>consumer-ы отправляют heartbeat-ы Координатору (один из брокеров)</p></li><li><p>Rebalance запускается, когда consumer отключился или подключились новые</p></li></ul></div></li><li><p>Группы consumer-ов читают данные из топиков независимо друг от друга</p></li></ul></div></li><li class="fragment"><p>Выполняет Polling сообщений из Кафки</p><div class="ulist"><ul><li><p>Если poll выполнять редко, то можно нарваться на rebalance</p></li></ul></div></li></ul></div></section><section id="consumer_groups"><h2>Consumer groups</h2><div class="imageblock" style=""><img src="images/what_is_kafka/kafka_consumer_0.png" alt="kafka consumer 0" /></div></section><section id="consumer_groups_2"><h2>Consumer groups</h2><div class="imageblock" style=""><img src="images/what_is_kafka/kafka_consumer_1.png" alt="kafka consumer 1" /></div></section><section id="consumer_groups_3"><h2>Consumer groups</h2><div class="imageblock" style=""><img src="images/what_is_kafka/kafka_consumer_2.png" alt="kafka consumer 2" /></div></section><section id="consumer_groups_4"><h2>Consumer groups</h2><div class="paragraph"><p>Кол-во партиций лучше сразу сделать с запасом!</p></div>
+<div class="imageblock" style=""><img src="images/what_is_kafka/kafka_consumer_3.png" alt="kafka consumer 3" /></div></section><section id="consumer_groups_5"><h2>Consumer groups</h2><div class="paragraph"><p>Очередность получения событий сохраняется</p></div>
+<div class="ulist"><ul><li><p>В рамках партиции</p></li><li><p>Для событий с одинаковым ключом</p></li></ul></div>
+<div class="imageblock" style=""><img src="images/what_is_kafka/kafka_consumer_4.png" alt="1000" width="800" /></div></section></section>
+<section><section id="kafka"><h2>2. Задачи, в которых применима Kafka</h2><div class="imageblock" style=""><img src="images/what_is_kafka/yes-or-no.jpg" alt="yes or no" /></div></section><section id="queue"><h2>Queue</h2><div class="ulist"><ul><li><p>с одной стороны создают "задания"</p></li><li><p>с другой - эти задачи нужно выполнять:</p><div class="ulist"><ul><li><p>в той же последовательности (или нет)</p></li><li><p>как можно быстрее</p></li><li><p>при неудачной обработке нужно пропустить, повторить&#8230;&#8203;</p></li></ul></div></li></ul></div>
+<div class="paragraph"><p>&#160;</p></div>
+<div class="paragraph"><p><strong>Consumer внутри группы читают данные из топика, как из очереди!</strong></p></div>
+<div class="paragraph"><p>&#160;</p></div>
+<div class="paragraph"><p>Пример: запросы на формирование отчетов в ЦР</p></div></section><section id="pub_sub_systems_event_sourcing"><h2>Pub-Sub systems (Event sourcing)</h2><div class="ulist"><ul><li><p>Издатели просто публикуют события, для всех</p></li><li><p>Подписчики - подписываются на интересующие их каналы/топики, возможно, при этом фильтруя события</p></li></ul></div>
+<div class="paragraph"><p>&#160;</p></div>
+<div class="paragraph"><p><strong>Consumer Groups читают данные из топика независимо друг от друга!</strong></p></div>
+<div class="paragraph"><p>&#160;</p></div>
+<div class="paragraph"><p>Пример: в ЦР события перемещения объекта потребляют UI, процессор бизнес-правил и др.</p></div></section><section id="service_bus"><h2>Service Bus</h2><div class="ulist"><ul><li><p>единая точка обмена сообщениями между системами</p></li><li><p>транзакции, контроль форматов сообщений, их преобразование и сохранность</p></li><li><p>умная маршрутизация сообщений</p></li></ul></div>
+<div class="paragraph"><p>&#160;
+<strong>Kafka</strong></p></div>
+<div class="ulist"><ul><li><p>есть механизм транзакций, который обеспечивает "Exactly Once" семантику</p></li><li><p>есть различные коннекторы - Kafka Connect</p></li><li><p>формат сообщений можно регулировать через Schema Registry (by Confluent)</p></li><li><p>все сообщения надежно хранятся</p></li><li><p>НО маршрутизацию сообщений нужно программировать самим</p></li></ul></div>
+<div class="paragraph"><p>&#160;</p></div>
+<div class="paragraph"><p>Пример: почти все подсистемы ЦР взаимодействуют через Кафку, модуль Нотификаций реализует логику маршрутизации</p></div></section><section id="stream_processing"><h2>Stream processing</h2><div class="paragraph"><p>Обработка потока данных "на лету"</p></div>
+<div class="imageblock" style=""><img src="images/what_is_kafka/kafka_streams.png" alt="kafka streams" /></div>
+<div class="paragraph"><p>&#160;</p></div>
+<div class="paragraph"><p>Пример: В ЦР на входе события перемещения метки - на выходе: перемещение объекта, вход/выход из геозоны, нотификации</p></div></section><section id="database_stream_table_duality"><h2>Database. Stream Table duality</h2><div class="imageblock" style=""><img src="images/what_is_kafka/changelog.gif" alt="changelog" /></div></section><section id="database_ktable_keyvaluestore"><h2>Database. KTable &amp; KeyValueStore</h2><div class="ulist"><ul><li><p>KTable - процессор на Kafka Streams, у которого есть состояние</p></li><li><p>Данные хранятся в памяти + сохраняются на диск в RocksDB</p></li><li><p>Бекап - в compacted-топиках</p></li><li><p>KSqlDB - надстройка над Kafka Streams (by Confluent)</p></li></ul></div>
+<div class="paragraph"><p>&#160;</p></div>
+<div class="paragraph"><p>Пример: Объекты в геозонах, статус online/offline</p></div></section><section id="database_globalktable"><h2>Database. GlobalKTable</h2><div class="ulist"><ul><li><p>KTable - партиционируется, GlobalKTable - нет</p></li></ul></div>
+<table class="tableblock frame-none grid-none" style="width:100%"><colgroup><col style="width:50%" /><col style="width:50%" /></colgroup><tbody><tr><td class="tableblock halign-left valign-top"><div><div class="imageblock" style=""><img src="images/what_is_kafka/ktable.png" alt="ktable" /></div></div></td><td class="tableblock halign-left valign-top"><div><div class="imageblock" style=""><img src="images/what_is_kafka/globalktable.png" alt="globalktable" /></div></div></td></tr></table></section><section id="database_interactive_queries"><h2>Database. Interactive Queries</h2><div class="ulist"><ul><li><p>Механизм доступа к State-у из вне</p></li></ul></div>
+<div class="imageblock" style=""><img src="images/what_is_kafka/streams-interactive-queries.png" alt="streams interactive queries" /></div></section></section>
+<section><section id=""><h2>3. Поднимаем локально</h2><table class="tableblock frame-none grid-none" style="width:100%"><colgroup><col style="width:50%" /><col style="width:50%" /></colgroup><tbody><tr><td class="tableblock halign-left valign-top"><div><div class="imageblock" style="text-align: right"><img src="images/what_is_kafka/docker.png" alt="docker" width="500" /></div></div></td><td class="tableblock halign-left valign-top"><div><div class="imageblock" style=""><img src="images/what_is_kafka/cli.png" alt="cli" width="200" /></div></div></td></tr></table></section><section id="docker"><h2>Поднимаем в Docker</h2><div class="paragraph"><p>docker-compose.yaml</p></div>
+<div class="listingblock"><div class="content"><pre class="CodeRay"><code class="yaml language-yaml"><span class="key">version</span>: <span class="string"><span class="content">'3.7'</span></span>
+<span class="key">services</span>:
+  <span class="key">zookeeper</span>:
+    <span class="key">image</span>: <span class="string"><span class="content">confluentinc/cp-zookeeper:5.4.1</span></span>
+    <span class="key">ports</span>:
+      - <span class="string"><span class="delimiter">&quot;</span><span class="content">2181:2181</span><span class="delimiter">&quot;</span></span>
+    <span class="key">environment</span>:
+      <span class="key">ZOOKEEPER_CLIENT_PORT</span>: <span class="string"><span class="content">2181</span></span>
+      <span class="key">ZOOKEEPER_TICK_TIME</span>: <span class="string"><span class="content">2000</span></span>
+  <span class="key">kafka</span>:
+    <span class="key">image</span>: <span class="string"><span class="content">confluentinc/cp-server:5.4.1</span></span>
+    <span class="key">depends_on</span>:
+      - <span class="string"><span class="content">zookeeper</span></span>
+    <span class="key">ports</span>:
+      - <span class="string"><span class="delimiter">&quot;</span><span class="content">9092:9092</span><span class="delimiter">&quot;</span></span>
+    <span class="key">environment</span>:
+      <span class="key">KAFKA_BROKER_ID</span>: <span class="string"><span class="content">1</span></span>
+      <span class="key">KAFKA_ZOOKEEPER_CONNECT</span>: <span class="string"><span class="content">'zookeeper:2181'</span></span>
+      <span class="key">KAFKA_LISTENER_SECURITY_PROTOCOL_MAP</span>: <span class="string"><span class="content">PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT</span></span>
+      <span class="key">KAFKA_LISTENERS</span>: <span class="string"><span class="content">PLAINTEXT://kafka:9092</span></span>
+      <span class="key">KAFKA_ADVERTISED_LISTENERS</span>: <span class="string"><span class="content">PLAINTEXT://kafka:9092</span></span>
+      <span class="key">KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR</span>: <span class="string"><span class="content">1</span></span>
+      <span class="key">KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR</span>: <span class="string"><span class="content">1</span></span></code></pre></div></div></section><section id=""><h2>Консольные утилиты</h2></section><section id=""><h2>Список топиков</h2><div class="listingblock"><div class="content"><pre class="CodeRay"><code class="bash language-bash">$ kafka-topics --zookeeper zookeeper:2181 --list
+
+$ kafkacat -b kafka:9092 -L</code></pre></div></div></section><section id=""><h2>Публикация сообщений</h2><div class="listingblock"><div class="content"><pre class="CodeRay"><code class="bash language-bash">$ kafka-console-producer --broker-list kafka:9092 --topic my_topic
+    --property &quot;parse.key=true&quot; --property &quot;key.separator=\t&quot; &lt; my_file.txt
+
+$ kafkacat -b kafka:9092 -t my_topic -P -K\t
+
+$ kafkacat -b kafka:9092 -t my_topic -P -K\t -l my_file.txt</code></pre></div></div></section><section id=""><h2>Чтение сообщений</h2><div class="listingblock"><div class="content"><pre class="CodeRay"><code class="bash language-bash">$ kafka-console-consumer --bootstrap-server kafka:9092 --topic my_topic
+    --property print.key=true --property print.value=true
+
+$ kafkacat -b kafka:9092 -t my_topic -C -o end -K\t
+
+$ kafkacat -b kafka:9092 -t my_topic -C -o beginning -c 10</code></pre></div></div></section><section id="conductor_io"><h2>Conductor.io</h2><div class="imageblock" style=""><img src="images/what_is_kafka/conductor.png" alt="conductor" width="800" /></div></section></section>
+<section><section id="kafka_api"><h2>4. Kafka API</h2><div class="ulist"><ul><li><p>Producer / Consumer</p><div class="ulist"><ul><li><p>Apache Kafka Java libraries</p></li><li><p>librdkafka (C/C++)</p></li><li><p>confluent-kafka-go / dotnet / python</p></li></ul></div></li><li><p>Kafka Streams</p></li><li><p>Kafka Connect</p></li><li><p>KSqlDB (by Confluent)</p></li></ul></div></section><section id=""><h2>Идем смотреть код!</h2><div class="imageblock" style=""><img src="images/what_is_kafka/go_coding.png" alt="go coding" /></div></section><section id="producer_2"><h2>Producer</h2><div class="listingblock"><div class="content"><pre class="CodeRay"><code class="java language-java"><span class="predefined-type">Properties</span> props = <span class="keyword">new</span> <span class="predefined-type">Properties</span>();
+props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, <span class="string"><span class="delimiter">&quot;</span><span class="content">localhost:9092</span><span class="delimiter">&quot;</span></span>);
+props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+
+Producer&lt;<span class="predefined-type">String</span>, <span class="predefined-type">String</span>&gt; producer = <span class="keyword">new</span> KafkaProducer&lt;&gt;(props);
+
+<span class="keyword">while</span> (!stop) {
+    var future = producer.send(record);
+    ...
+}
+
+producer.close();</code></pre></div></div></section><section id="consumer_2"><h2>Consumer</h2><div class="listingblock"><div class="content"><pre class="CodeRay"><code class="java language-java"><span class="predefined-type">Properties</span> props = <span class="keyword">new</span> <span class="predefined-type">Properties</span>();
+props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, <span class="string"><span class="delimiter">&quot;</span><span class="content">localhost:9092</span><span class="delimiter">&quot;</span></span>);
+props.put(ConsumerConfig.GROUP_ID_CONFIG, <span class="string"><span class="delimiter">&quot;</span><span class="content">my-consumer</span><span class="delimiter">&quot;</span></span>);
+props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+
+KafkaConsumer&lt;<span class="predefined-type">String</span>, <span class="predefined-type">String</span>&gt; consumer = <span class="keyword">new</span> KafkaConsumer&lt;&gt;(props);
+consumer.subscribe(<span class="predefined-type">Collections</span>.singleton(<span class="string"><span class="delimiter">&quot;</span><span class="content">my-topic</span><span class="delimiter">&quot;</span></span>));
+
+<span class="keyword">while</span> (!stop) {
+    <span class="keyword">for</span> (ConsumerRecord&lt;<span class="predefined-type">String</span>, <span class="predefined-type">String</span>&gt; record : consumer.poll(<span class="predefined-type">Duration</span>.ofSeconds(<span class="integer">1</span>))) {
+        ...
+    }
+}
+
+consumer.close();</code></pre></div></div></section><section id="spring_producer"><h2>Spring Producer</h2><div class="listingblock"><div class="title">application.yml</div><div class="content"><pre class="CodeRay"><code class="yaml language-yaml"><span class="key">spring.kafka</span>:
+  <span class="key">bootstrap-servers</span>: <span class="string"><span class="content">localhost:9092</span></span></code></pre></div></div>
+<div class="listingblock"><div class="content"><pre class="CodeRay"><code class="java language-java">.Producer.java
+<span class="annotation">@Bean</span>
+<span class="directive">public</span> KafkaTemplate&lt;<span class="predefined-type">String</span>, <span class="predefined-type">Event</span>&gt; kafkaTemplate(
+        ProducerFactory&lt;<span class="predefined-type">String</span>, <span class="predefined-type">Event</span>&gt; factory, ObjectMapper objectMapper) {
+    var defaultFactory = (DefaultKafkaProducerFactory&lt;<span class="predefined-type">String</span>, <span class="predefined-type">Event</span>&gt;) factory;
+    defaultFactory.setKeySerializer(<span class="keyword">new</span> StringSerializer());
+    defaultFactory.setValueSerializer(<span class="keyword">new</span> JsonSerializer&lt;&gt;(objectMapper));
+    <span class="keyword">return</span> <span class="keyword">new</span> KafkaTemplate&lt;&gt;(factory);
+}
+
+<span class="type">void</span> run() {
+    ...
+    kafkaTemplate.send(topic, eventKey, event);
+}</code></pre></div></div></section><section id="spring_consumer"><h2>Spring Consumer</h2><div class="listingblock"><div class="content"><pre class="CodeRay"><code class="java language-java"><span class="annotation">@KafkaListener</span>(id = <span class="string"><span class="delimiter">&quot;</span><span class="content">myConsumerGroup</span><span class="delimiter">&quot;</span></span>, topics = <span class="string"><span class="delimiter">&quot;</span><span class="content">myTopic</span><span class="delimiter">&quot;</span></span>)
+<span class="directive">public</span> <span class="type">void</span> listen(<span class="predefined-type">String</span> message) {
+    ...
+}
+
+<span class="annotation">@KafkaListener</span>(id = <span class="string"><span class="delimiter">&quot;</span><span class="content">pollResults</span><span class="delimiter">&quot;</span></span>, topics = <span class="string"><span class="delimiter">&quot;</span><span class="content">myTopic</span><span class="delimiter">&quot;</span></span>, containerFactory = <span class="string"><span class="delimiter">&quot;</span><span class="content">myFactory</span><span class="delimiter">&quot;</span></span>)
+<span class="directive">public</span> <span class="type">void</span> pollResults(ConsumerRecords&lt;?, ?&gt; records) {
+    ...
+}
+
+<span class="annotation">@KafkaListener</span>(id = <span class="string"><span class="delimiter">&quot;</span><span class="content">listMsgAckConsumer</span><span class="delimiter">&quot;</span></span>, topics = <span class="string"><span class="delimiter">&quot;</span><span class="content">myTopic</span><span class="delimiter">&quot;</span></span>, containerFactory = <span class="string"><span class="delimiter">&quot;</span><span class="content">myFactory</span><span class="delimiter">&quot;</span></span>)
+<span class="type">void</span> listenWithManualCommits(<span class="predefined-type">List</span>&lt;Message&lt;?&gt;&gt; list, Acknowledgment ack, Consumer&lt;?, ?&gt; consumer) {
+    ...
+    ack.acknowledge();
+}</code></pre></div></div></section></section>
+<section id=""><h2>Тестирование</h2><div class="ulist"><ul><li class="fragment"><p>Собирать и запускать тесты в докере, поднимая в соседнем контейнере кафку</p></li><li class="fragment"><p>org.springframework.kafka.test.EmbeddedKafkaBroker</p></li><li class="fragment"><p>org.testcontainers.containers.KafkaContainer</p></li><li class="fragment"><p>TopologyTestDriver - тестирование Kafka Streams приложений</p></li><li class="fragment"><p>ksql-test-runner - тестирование KSqlDB приложений</p></li></ul></div></section>
+<section id=""><h2>Ссылки</h2><div class="ulist"><ul><li><p>Документация</p><div class="ulist"><ul><li><p><a href="http://kafka.apache.org/documentation" class="bare">http://kafka.apache.org/documentation</a></p></li><li><p><a href="http://docs.spring.io/spring-kafka/docs/2.5.0.RELEASE/reference/html/#kafka" class="bare">http://docs.spring.io/spring-kafka/docs/2.5.0.RELEASE/reference/html/#kafka</a></p></li><li><p><a href="https://docs.confluent.io/current/clients/index.html#ak-clients" class="bare">https://docs.confluent.io/current/clients/index.html#ak-clients</a></p></li><li><p><a href="http://kafka-tutorials.confluent.io" class="bare">http://kafka-tutorials.confluent.io</a></p></li><li><p><a href="https://docs.ksqldb.io" class="bare">https://docs.ksqldb.io</a></p></li></ul></div></li><li><p>Исходники примеров - <a href="https://github.com/a-konyaev/kafka-blocks" class="bare">https://github.com/a-konyaev/kafka-blocks</a></p></li><li><p>Телеграм - <a href="http://t.me/proKafka" class="bare">http://t.me/proKafka</a></p></li></ul></div></section></div></div><script src="reveal.js-3.5.0/lib/js/head.min.js"></script><script src="reveal.js-3.5.0/js/reveal.js"></script><script>// See https://github.com/hakimel/reveal.js#configuration for a full list of configuration options
+Reveal.initialize({
+  // Display controls in the bottom right corner
+  controls: true,
+  // Display a presentation progress bar
+  progress: true,
+  // Set a per-slide timing for speaker notes, null means none
+  defaultTiming: null,
+  // Display the page number of the current slide
+  slideNumber: true,
+  // Push each slide change to the browser history
+  history: true,
+  // Enable keyboard shortcuts for navigation
+  keyboard: true,
+  // Enable the slide overview mode
+  overview: true,
+  // Vertical centering of slides
+  center: false,
+  // Enables touch navigation on devices with touch input
+  touch: true,
+  // Loop the presentation
+  loop: false,
+  // Change the presentation direction to be RTL
+  rtl: false,
+  // Randomizes the order of slides each time the presentation loads
+  shuffle: false,
+  // Turns fragments on and off globally
+  fragments: true,
+  // Flags if the presentation is running in an embedded mode,
+  // i.e. contained within a limited portion of the screen
+  embedded: false,
+  // Flags if we should show a help overlay when the questionmark
+  // key is pressed
+  help: true,
+  // Flags if speaker notes should be visible to all viewers
+  showNotes: false,
+  // Global override for autolaying embedded media (video/audio/iframe)
+  // - null: Media will only autoplay if data-autoplay is present
+  // - true: All media will autoplay, regardless of individual setting
+  // - false: No media will autoplay, regardless of individual setting
+  autoPlayMedia: null,
+  // Number of milliseconds between automatically proceeding to the
+  // next slide, disabled when set to 0, this value can be overwritten
+  // by using a data-autoslide attribute on your slides
+  autoSlide: 0,
+  // Stop auto-sliding after user input
+  autoSlideStoppable: true,
+  // Enable slide navigation via mouse wheel
+  mouseWheel: true,
+  // Hides the address bar on mobile devices
+  hideAddressBar: true,
+  // Opens links in an iframe preview overlay
+  previewLinks: false,
+  // Theme (e.g., beige, black, league, night, serif, simple, sky, solarized, white)
+  // NOTE setting the theme in the config no longer works in reveal.js 3.x
+  //theme: Reveal.getQueryHash().theme || 'black',
+  // Transition style (e.g., none, fade, slide, convex, concave, zoom)
+  transition: Reveal.getQueryHash().transition || 'linear',
+  // Transition speed (e.g., default, fast, slow)
+  transitionSpeed: 'default',
+  // Transition style for full page slide backgrounds (e.g., none, fade, slide, convex, concave, zoom)
+  backgroundTransition: 'fade',
+  // Number of slides away from the current that are visible
+  viewDistance: 3,
+  // Parallax background image (e.g., "'https://s3.amazonaws.com/hakim-static/reveal-js/reveal-parallax-1.jpg'")
+  parallaxBackgroundImage: '',
+  // Parallax background size in CSS syntax (e.g., "2100px 900px")
+  parallaxBackgroundSize: '',
+
+  // The "normal" size of the presentation, aspect ratio will be preserved
+  // when the presentation is scaled to fit different resolutions. Can be
+  // specified using percentage units.
+  width: 1600,
+  height: 900,
+
+  // Factor of the display size that should remain empty around the content
+  margin: 0.1,
+
+  // Bounds for smallest/largest possible scale to apply to content
+  minScale: 0.2,
+  maxScale: 1.5,
+
+  // Optional libraries used to extend on reveal.js
+  dependencies: [
+      { src: 'reveal.js-3.5.0/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+      { src: 'reveal.js-3.5.0/plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+      { src: 'reveal.js-3.5.0/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+      
+      { src: 'reveal.js-3.5.0/plugin/zoom-js/zoom.js', async: true },
+      { src: 'reveal.js-3.5.0/plugin/notes/notes.js', async: true }
+  ]
+});</script></body></html>
