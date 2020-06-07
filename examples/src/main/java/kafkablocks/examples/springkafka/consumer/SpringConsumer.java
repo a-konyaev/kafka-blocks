@@ -15,28 +15,28 @@ import java.util.List;
 @Slf4j
 public class SpringConsumer {
 
-    //@KafkaListener(id = "spring-kafka-consumer", topics = "spring-kafka-position")
+    @KafkaListener(id = "spring-kafka-consumer", topics = "spring-kafka-position")
     public void listen(String message) {
         log.info("message: {}", message);
+        process(null);
     }
 
     //region fine-tuning
 
-    @KafkaListener(id = "spring-kafka-consumer", topics = "spring-kafka-position", containerFactory = "myFactory")
+    //@KafkaListener(id = "spring-kafka-consumer", topics = "spring-kafka-position", containerFactory = "myFactory")
     public void pollEvents(ConsumerRecords<String, PositionEvent> records) {
         log.info("Batch size = {}", records.count());
         for (ConsumerRecord<String, PositionEvent> record : records) {
             process(record.value());  // runtime error! record.value() - String!
             logRecord(record, "ok");
         }
-        ThreadUtils.safeDelaySec(1);
     }
 
     private void logRecord(ConsumerRecord<String, PositionEvent> record, String prefix) {
         log.info("{} [{}-{}] {} -> {}", prefix, record.partition(), record.offset(), record.key(), record.value());
     }
 
-    private void process(PositionEvent value) {
+    public void process(PositionEvent event) {
         ThreadUtils.safeDelay(300); // processing...
     }
 

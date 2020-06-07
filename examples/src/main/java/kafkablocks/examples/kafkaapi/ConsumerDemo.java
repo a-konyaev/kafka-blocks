@@ -46,8 +46,6 @@ public class ConsumerDemo {
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"); //default = latest
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        //auto.commit.interval.ms
-        //session.timeout.ms
         return props;
     }
 }

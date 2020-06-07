@@ -1,6 +1,5 @@
 package kafkablocks.examples.springkafka.producer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import kafkablocks.events.Event;
 import kafkablocks.examples.events.MultipleObjectsPositionEventGenerator;
 import kafkablocks.examples.events.PositionEventGenerator;
@@ -24,22 +23,16 @@ public class SpringProducerApp {
     }
 
     @Bean
-    public KafkaTemplate<String, Event> kafkaTemplate(
-            ProducerFactory<String, Event> factory, ObjectMapper objectMapper) {
+    public KafkaTemplate<String, Event> kafkaTemplate(ProducerFactory<String, Event> factory) {
         var defaultFactory = (DefaultKafkaProducerFactory<String, Event>) factory;
         defaultFactory.setKeySerializer(new StringSerializer());
-        defaultFactory.setValueSerializer(new JsonSerializer<>(objectMapper));
+        defaultFactory.setValueSerializer(new JsonSerializer<>(ObjectMapperUtils.createWithDefaultDTFormatters()));
         return new KafkaTemplate<>(factory);
     }
 
     @Bean
     public NewTopic positionTopic() {
         return new NewTopic(TOPIC, 3, (short) 1);
-    }
-
-    @Bean
-    public ObjectMapper objectMapper() {
-        return ObjectMapperUtils.createWithDefaultDTFormatters();
     }
 
     @Bean

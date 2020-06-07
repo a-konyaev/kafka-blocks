@@ -27,43 +27,43 @@ public class SpringConsumerApp {
 
     //region fine-tuning
 
-    @Bean
-    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, PositionEvent>>
-    myFactory(ConsumerFactory<String, PositionEvent> consumerFactory) {
-        var factory = new ConcurrentKafkaListenerContainerFactory<String, PositionEvent>();
-        factory.setConsumerFactory(consumerFactory);
-        factory.setBatchListener(true);
-        //factory.setConcurrency(4); // run in parallel
-
-        // for manual commits
-        //factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
-        return factory;
-    }
+//    @Bean
+//    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, PositionEvent>>
+//    myFactory(ConsumerFactory<String, PositionEvent> consumerFactory) {
+//        var factory = new ConcurrentKafkaListenerContainerFactory<String, PositionEvent>();
+//        factory.setConsumerFactory(consumerFactory);
+//        factory.setBatchListener(true);
+//        //factory.setConcurrency(4); // run in parallel
+//
+//        // for manual commits
+//        //factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
+//        return factory;
+//    }
 
     //region deeper...
-    @Value("${spring.kafka.bootstrap-servers}")
-    private String bootstrapServers;
-
-    @Bean
-    public Map<String, Object> consumerConfigs() {
-        Map<String, Object> props = new HashMap<>();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
-
-        // for manual commits
-        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
-        return props;
-    }
-
-    @Bean
-    @Primary
-    public ConsumerFactory<String, PositionEvent> consumerFactory() {
-        return new DefaultKafkaConsumerFactory<>(
-                consumerConfigs(),
-                new StringDeserializer(),
-                new JsonDeserializer<>(PositionEvent.class)); // exact type PositionEvent !!!
-    }
+//    @Value("${spring.kafka.bootstrap-servers}")
+//    private String bootstrapServers;
+//
+//    @Bean
+//    public Map<String, Object> consumerConfigs() {
+//        Map<String, Object> props = new HashMap<>();
+//        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+//        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+//        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
+//
+//        // for manual commits
+//        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+//        return props;
+//    }
+//
+//    @Bean
+//    @Primary
+//    public ConsumerFactory<String, PositionEvent> consumerFactory() {
+//        return new DefaultKafkaConsumerFactory<>(
+//                consumerConfigs(),
+//                new StringDeserializer(),
+//                new JsonDeserializer<>(PositionEvent.class)); // exact type PositionEvent !!!
+//    }
     //endregion
 
     //endregion
