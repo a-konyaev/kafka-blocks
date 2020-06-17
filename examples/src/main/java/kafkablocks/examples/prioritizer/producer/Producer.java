@@ -1,6 +1,7 @@
 package kafkablocks.examples.prioritizer.producer;
 
 import kafkablocks.examples.prioritizer.Constants;
+import kafkablocks.utils.RandomUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +40,7 @@ public class Producer {
             var msg = String.format("low-%06d", i++);
             kafkaTemplate.send(Constants.LOW_PRIORITY_TOPIC, UUID.randomUUID().toString(), msg);
             log.info("sent low: {}", msg);
-            Thread.sleep(100);
+            Thread.sleep(200);
         }
     }
 
@@ -52,9 +53,9 @@ public class Producer {
             log.info("sent high: {}", msg);
 
             if (i % 5 == 0) {
-                Thread.sleep(3_000);
+                Thread.sleep(RandomUtils.getRandomInt(1_000, 5_000));
             } else {
-                Thread.sleep(80);
+                Thread.sleep(RandomUtils.getRandomInt(50, 150));
             }
         }
     }

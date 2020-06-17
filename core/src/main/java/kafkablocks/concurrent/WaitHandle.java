@@ -1,6 +1,8 @@
 package kafkablocks.concurrent;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -20,7 +22,7 @@ public final class WaitHandle {
 
     private final Object monitor = new Object();
     private volatile boolean isSet = false;
-    private volatile WaitAnyLatch latch;
+    private final List<WaitAnyLatch> latchList = new ArrayList<>();
 
 
     public void set() {
@@ -28,7 +30,9 @@ public final class WaitHandle {
             isSet = true;
             monitor.notifyAll();
 
-            if (latch != null) {
+            ArrayList<WaitAnyLatch> tmpList = new ArrayList<>(latchList);
+            latchList.clear();
+            for (WaitAnyLatch latch : tmpList) {
                 latch.signal(this);
             }
         }
@@ -44,11 +48,12 @@ public final class WaitHandle {
 
     private void assignLatch(WaitAnyLatch latch) {
         synchronized (monitor) {
-            this.latch = latch;
-
             if (isSet) {
-                this.latch.signal(this);
+                latch.signal(this);
+                return;
             }
+
+            this.latchList.add(latch);
         }
     }
 
@@ -82,6 +87,8 @@ public final class WaitHandle {
                 monitor.wait(timeout == 0 ? 0 : unit.toMillis(timeout));
                 return isSet;
             } catch (InterruptedException e) {
+                //todo: плохо, надо или выбрасывать исключение (но тогда его придется везде обрабатывать)
+                //  или возвращать отдельный код
                 return false;
             }
         }

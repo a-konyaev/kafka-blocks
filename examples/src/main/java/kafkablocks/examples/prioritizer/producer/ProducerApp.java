@@ -15,11 +15,11 @@ public class ProducerApp {
 
     @Bean
     public NewTopic lowPriorityTopic() {
-        return new NewTopic(Constants.LOW_PRIORITY_TOPIC, 3, (short) 1);
+        return new NewTopic(Constants.LOW_PRIORITY_TOPIC, 1, (short) 1);
     }
 
     @Bean
     public NewTopic highPriorityTopic() {
-        return new NewTopic(Constants.LOW_PRIORITY_TOPIC, 3, (short) 1);
+        return new NewTopic(Constants.LOW_PRIORITY_TOPIC, 1, (short) 1);
     }
 }

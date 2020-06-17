@@ -6,6 +6,8 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
@@ -59,23 +61,27 @@ public class Consumer {
     @SneakyThrows
     private void processMessage(String message) {
         log.info("processing message: {}", message);
-        Thread.sleep(50);
+        Thread.sleep(120);
     }
 
     @KafkaListener(id = "spring-kafka-consumer-high", topics = "high-priority", containerFactory = "myFactory")
-    public void listenHigh(@Payload String message, Acknowledgment ack) {
-        //log.info("high message: {}", message);
+    public void listenHigh(@Payload String message,
+                           @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition,
+                           Acknowledgment ack) {
+        //log.info("[{}] new message: {}", partition, message);
         boolean received = highChannel.send(message);
         if (received) {
             ack.acknowledge();
         } else {
-            ack.nack(100);
+            ack.nack(0);
         }
     }
 
     @KafkaListener(id = "spring-kafka-consumer-low", topics = "low-priority", containerFactory = "myFactory")
-    public void listenLow(@Payload String message, Acknowledgment ack) {
-        //log.info("low message: {}", message);
+    public void listenLow(@Payload String message,
+                          @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition,
+                          Acknowledgment ack) {
+        //log.info("[{}] new message: {}", partition, message);
         boolean received = lowChannel.send(message);
         if (received) {
             ack.acknowledge();
