@@ -5,7 +5,7 @@ spring.main:
 logging.level:
   root: WARN
   org.springframework: INFO
-  org.apache.kafka: INFO
+  org.apache.kafka: WARN
   kafkablocks: INFO
 
 spring.kafka:
