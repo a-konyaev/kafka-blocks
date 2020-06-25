@@ -1,7 +1,6 @@
 package kafkablocks.examples.prioritizer.producer;
 
 import kafkablocks.examples.prioritizer.Constants;
-import kafkablocks.utils.RandomUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +39,7 @@ public class Producer {
             var msg = String.format("low-%06d", i++);
             kafkaTemplate.send(Constants.LOW_PRIORITY_TOPIC, UUID.randomUUID().toString(), msg);
             log.info("sent low: {}", msg);
-            Thread.sleep(200);
+            Constants.sleepAbout(Constants.LOW_MESSAGE_PRODUCING_PERIOD);
         }
     }
 
@@ -48,16 +47,15 @@ public class Producer {
     private void produceHighPriorityMessages() {
         int i = 0;
         while (!Thread.currentThread().isInterrupted()) {
-            var msg = String.format("high-%06d", i++);
-            kafkaTemplate.send(Constants.HIGH_PRIORITY_TOPIC, UUID.randomUUID().toString(), msg);
-            log.info("sent high: {}", msg);
+            Constants.sleepAbout(Constants.HIGH_MESSAGE_SLEEP_PERIOD);
 
-            if (i % 5 == 0) {
-                Thread.sleep(RandomUtils.getRandomInt(1_000, 5_000));
-            } else {
-                Thread.sleep(RandomUtils.getRandomInt(50, 150));
+            var batchSize = Constants.addNoise(Constants.HIGH_MESSAGES_BATCH_SIZE);
+            for (int j = 0; j < batchSize; j++) {
+                var msg = String.format("high-%06d", i++);
+                kafkaTemplate.send(Constants.HIGH_PRIORITY_TOPIC, UUID.randomUUID().toString(), msg);
+                log.info("sent high: {}", msg);
+                Constants.sleepAbout(Constants.HIGH_MESSAGE_PRODUCING_PERIOD);
             }
         }
     }
-
 }

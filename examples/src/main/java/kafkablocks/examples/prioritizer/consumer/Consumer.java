@@ -1,6 +1,7 @@
 package kafkablocks.examples.prioritizer.consumer;
 
 import kafkablocks.concurrent.WaitHandle;
+import kafkablocks.examples.prioritizer.Constants;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -58,10 +59,9 @@ public class Consumer {
         }
     }
 
-    @SneakyThrows
     private void processMessage(String message) {
         log.info("processing message: {}", message);
-        Thread.sleep(120);
+        Constants.sleepAbout(Constants.MESSAGE_PROCESSING_TIME);
     }
 
     @KafkaListener(id = "spring-kafka-consumer-high", topics = "high-priority", containerFactory = "myFactory")
