@@ -1,0 +1,28 @@
+мониторить размер топиков на диске
+    ./kafka-run-class.sh - для дампа лог-файла кафки
+    
+    
+// примеры использования скриптов, чтобы поиграться с кафкой (скрипты локально на винде, кафка - поднята в докере)
+
+// создать топик test-input
+> kafka-topics.bat --create --zookeeper 192.168.99.100:2181 --replication-factor 1 --partitions 1 --topic test-input
+> kafka-topics.bat --create --zookeeper 192.168.99.100:2181 --replication-factor 1 --partitions 1 --topic test-output --config cleanup.policy=compact
+
+// удалить топик test-input
+kafka-topics.bat --delete --zookeeper 192.168.99.100:2181 --topic test-input
+
+// удалить все топики
+FOR /f "tokens=*" %i IN ('kafka-topics.bat --zookeeper 192.168.99.100:2181 --list') DO kafka-topics.bat --delete --zookeeper 192.168.99.100:2181 --topic %i
+
+// посмотреть топик
+> kafka-topics.bat --describe --zookeeper 192.168.99.100:2181 --topic test-input
+	
+// посмотреть все топики
+> kafka-topics.bat --list --zookeeper 192.168.99.100:2181
+	
+// запустить консольный продюсер в топик test-input (сообщения - просто строки, вводишь с консоли)
+> kafka-console-producer.bat --broker-list 192.168.99.100:9092 --topic test-input
+	
+// запустить консольный консюмер из топика test-input (будет читать топик с самого начала)
+> kafka-console-consumer.bat --zookeeper 192.168.99.100:2181 --topic vendor-tag-movement --from-beginning
+> kafka-console-consumer.bat --zookeeper 192.168.99.100:2181 --topic test-output --from-beginning --formatter kafka.tools.DefaultMessageFormatter --property consumer.timeout.ms=1000 --property print.key=true --property print.value=true --property key.deserializer=org.apache.kafka.common.serialization.StringDeserializer --property value.deserializer=org.apache.kafka.common.serialization.LongDeserializer
