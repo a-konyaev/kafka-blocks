@@ -3,7 +3,6 @@ package kafkablocks.examples.prioritizer.consumer;
 import kafkablocks.concurrent.WaitHandle;
 import kafkablocks.examples.prioritizer.Constants;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
@@ -23,8 +22,13 @@ import java.util.concurrent.TimeUnit;
 public class Consumer {
 
     private Thread thread;
-    private MessageChannel highChannel = new MessageChannel(50, 200);
-    private MessageChannel lowChannel = new MessageChannel(50, 200);
+    private final MessageChannel highChannel = new MessageChannel(
+            Constants.CHANNEL_SEND_TIMEOUT, Constants.CHANNEL_RECEIVE_TIMEOUT);
+    private final MessageChannel lowChannel = new MessageChannel(
+            Constants.CHANNEL_SEND_TIMEOUT, Constants.CHANNEL_RECEIVE_TIMEOUT);
+
+    private long startTs;
+    private int lowMsgCount;
 
     @PostConstruct
     private void init() {
@@ -55,11 +59,20 @@ public class Consumer {
             var lowMessages = lowChannel.receive();
             for (String message : lowMessages) {
                 processMessage(message);
+
+                if (++lowMsgCount == Constants.MAX_LOW_MESSAGES) {
+                    var duration = System.currentTimeMillis() - startTs;
+                    log.info("processed {} low messages in {} msec", lowMsgCount, duration);
+                }
             }
         }
     }
 
     private void processMessage(String message) {
+        if (lowMsgCount == 0) {
+            startTs = System.currentTimeMillis();
+        }
+
         log.info("processing message: {}", message);
         Constants.sleepAbout(Constants.MESSAGE_PROCESSING_TIME);
     }

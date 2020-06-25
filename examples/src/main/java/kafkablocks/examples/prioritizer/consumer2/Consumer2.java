@@ -1,5 +1,6 @@
 package kafkablocks.examples.prioritizer.consumer2;
 
+import kafkablocks.examples.prioritizer.Constants;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.common.PartitionInfo;
@@ -27,6 +28,9 @@ public class Consumer2 {
     @Autowired
     private BusinessService businessService;
 
+    private long startTs;
+    private int lowMsgCount;
+
     @KafkaListener(
             id = "consumer2-group",
             topics = {HIGH_PRIORITY_TOPIC, LOW_PRIORITY_TOPIC},
@@ -36,6 +40,10 @@ public class Consumer2 {
                                              Consumer<?, ?> consumer,
                                              Acknowledgment ack) {
 
+        if (lowMsgCount == 0) {
+            startTs = System.currentTimeMillis();
+        }
+
         if (HIGH_PRIORITY_TOPIC.equals(topic)) {
             businessService.processHigh(body);
             ack.acknowledge();
@@ -43,12 +51,18 @@ public class Consumer2 {
         }
 
         if (LOW_PRIORITY_TOPIC.equals(topic)) {
-            log.info("checking unread...");
+            //log.info("checking unread...");
             var noUnread = noUnreadMessagesInTopic(HIGH_PRIORITY_TOPIC, consumer);
-            log.info("checking unread...done");
+            //log.info("checking unread...done");
             if (noUnread) {
                 businessService.processLow(body);
                 ack.acknowledge();
+
+                if (++lowMsgCount == Constants.MAX_LOW_MESSAGES) {
+                    var duration = System.currentTimeMillis() - startTs;
+                    log.info("processed {} low messages in {} msec", lowMsgCount, duration);
+                }
+
             } else {
                 ack.nack(0);
             }
