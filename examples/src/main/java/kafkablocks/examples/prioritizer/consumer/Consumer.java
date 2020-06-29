@@ -45,21 +45,30 @@ public class Consumer {
 
     private void process() {
         while (!Thread.currentThread().isInterrupted()) {
+            //log.info("1111");
             var highMessages = highChannel.receive();
+            //log.info("2222");
             if (!highMessages.isEmpty()) {
                 //?? lowConsumer.pause();
 
                 for (String message : highMessages) {
+                    //log.info("3333");
                     processMessage(message);
+                    //log.info("4444");
                 }
+                //log.info("5555");
                 continue; // снова пробуем взять high-priority сообщения
             }
 
+            //log.info("6666");
+
             //?? lowConsumer.resume();
             var lowMessages = lowChannel.receive();
+            //log.info("7777");
             for (String message : lowMessages) {
+                //log.info("8888");
                 processMessage(message);
-
+                //log.info("9999");
                 if (++lowMsgCount == Constants.MAX_LOW_MESSAGES) {
                     var duration = System.currentTimeMillis() - startTs;
                     log.info("processed {} low messages in {} msec", lowMsgCount, duration);
@@ -81,25 +90,34 @@ public class Consumer {
     public void listenHigh(@Payload String message,
                            @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition,
                            Acknowledgment ack) {
-        //log.info("[{}] new message: {}", partition, message);
+        //log.info("aaa");
         boolean received = highChannel.send(message);
+        //log.info("bbb");
         if (received) {
+            //log.info("ccc");
             ack.acknowledge();
         } else {
+            //log.info("ddd");
             ack.nack(0);
         }
+        //log.info("eee");
     }
 
     @KafkaListener(id = "spring-kafka-consumer-low", topics = "low-priority", containerFactory = "myFactory")
     public void listenLow(@Payload String message,
                           @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition,
                           Acknowledgment ack) {
-        //log.info("[{}] new message: {}", partition, message);
+        //log.info("iii");
         boolean received = lowChannel.send(message);
+        //log.info("jjj");
         if (received) {
+            //log.info("kkk");
             ack.acknowledge();
+            //log.info("ppp");
         } else {
+            //log.info("mmm");
             ack.nack(0);
+            //log.info("nnn");
         }
     }
 
@@ -115,13 +133,13 @@ public class Consumer {
             msgReceived.reset();
             this.message = message;
             msgAvailable.set();
-            var res = msgReceived.wait(receiveTimeout, TimeUnit.MILLISECONDS);
+            var res = msgReceived.wait(sendTimeout, TimeUnit.MILLISECONDS);
             msgAvailable.reset();
             return res;
         }
 
         public List<String> receive() {
-            if (!msgAvailable.wait(sendTimeout, TimeUnit.MILLISECONDS)) {
+            if (!msgAvailable.wait(receiveTimeout, TimeUnit.MILLISECONDS)) {
                 return Collections.emptyList();
             }
 

@@ -8,7 +8,7 @@ public final class Constants {
     public static final String LOW_PRIORITY_TOPIC = "low-priority";
     public static final String HIGH_PRIORITY_TOPIC = "high-priority";
 
-    public static final long CHANNEL_SEND_TIMEOUT = 10;
+    public static final long CHANNEL_SEND_TIMEOUT = 50;
     public static final long CHANNEL_RECEIVE_TIMEOUT = 10;
 
     public static final long LOW_MESSAGE_PRODUCING_PERIOD = 20;
@@ -18,7 +18,7 @@ public final class Constants {
     public static final long HIGH_MESSAGES_BATCH_SIZE = 10;
 
     public static final long MESSAGE_PROCESSING_TIME = 10;
-    public static final int MAX_LOW_MESSAGES = 10_000;
+    public static final int MAX_LOW_MESSAGES = 5_000;
 
     private static final Random RANDOM = new Random();
 

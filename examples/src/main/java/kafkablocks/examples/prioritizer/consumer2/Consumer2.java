@@ -51,9 +51,9 @@ public class Consumer2 {
         }
 
         if (LOW_PRIORITY_TOPIC.equals(topic)) {
-            //log.info("checking unread...");
+            var s = System.currentTimeMillis();
             var noUnread = noUnreadMessagesInTopic(HIGH_PRIORITY_TOPIC, consumer);
-            //log.info("checking unread...done");
+            log.info("checking unread in {} msec", (System.currentTimeMillis() - s));
             if (noUnread) {
                 businessService.processLow(body);
                 ack.acknowledge();
