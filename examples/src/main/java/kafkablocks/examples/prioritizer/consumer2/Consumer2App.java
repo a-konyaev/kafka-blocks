@@ -1,5 +1,6 @@
 package kafkablocks.examples.prioritizer.consumer2;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @SpringBootApplication
+@Slf4j
 public class Consumer2App {
 
     public static void main(String[] args) {
@@ -26,10 +28,14 @@ public class Consumer2App {
 
     @Bean
     public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, String>>
-    myFactory(ConsumerFactory<String, String> consumerFactory) {
+    myFactory(ConsumerFactory<String, String> consumerFactory, TopicPartitionInfo topicPartitionInfo) {
         var factory = new ConcurrentKafkaListenerContainerFactory<String, String>();
         factory.setConsumerFactory(consumerFactory);
-        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
+
+        var containerProps = factory.getContainerProperties();
+        containerProps.setAckMode(ContainerProperties.AckMode.MANUAL);
+        containerProps.setConsumerRebalanceListener(topicPartitionInfo);
+
         return factory;
     }
 
