@@ -18,7 +18,7 @@ public class DistanceProcessor
         extends BaseTransformingEventProcessor<PositionEvent, DistanceEvent> {
 
     @Override
-    protected List<DistanceEvent> processEvent(String key, PositionEvent positionEvent) {
+    protected List<DistanceEvent> process(String key, PositionEvent positionEvent) {
         //todo
         var distanceEvent = new DistanceEvent(positionEvent.getObjectId(), 0);
 

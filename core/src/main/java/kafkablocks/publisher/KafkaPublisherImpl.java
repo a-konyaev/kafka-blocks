@@ -1,7 +1,7 @@
 package kafkablocks.publisher;
 
-
 import lombok.Setter;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +22,6 @@ import kafkablocks.serialization.SerdeProvider;
 
 import javax.annotation.PostConstruct;
 import java.util.UUID;
-
 
 @Component
 @EnableConfigurationProperties(EventTopicProperties.class)
@@ -68,10 +67,22 @@ public class KafkaPublisherImpl implements KafkaPublisher {
 
     @Override
     public void publishEvent(Event event) {
-        if (event == null)
-            throw new IllegalArgumentException("event is null");
+        assertEvent(event);
+        publishEvent(event, eventTopicProperties.resolveTopicByEvent(event), false);
+    }
 
-        String topic = eventTopicProperties.resolveTopicByEvent(event);
+    @Override
+    public void publishEvent(Event event, String topic) {
+        assertEvent(event);
+        publishEvent(event, topic, true);
+    }
+
+    private void publishEvent(Event event, String topic, boolean checkTopicExistence) {
+        if (checkTopicExistence) {
+            // todo проверять наличие топика.
+            //  результаты проверки запоминать, чтобы не проверять постоянно
+            //  и в эти результаты добавить топики, которые вычисляем автоматически
+        }
 
         String id = event.getId();
         logger.debug("[{}] Sending event to topic '{}': {}", id, topic, event);
@@ -82,11 +93,13 @@ public class KafkaPublisherImpl implements KafkaPublisher {
         future.addCallback(new ListenableFutureCallback<SendResult<String, Event>>() {
             @Override
             public void onSuccess(final SendResult<String, Event> message) {
-                logger.debug("[{}#{}] Event was successfully sent: key={}, offset={}",
+                RecordMetadata recordMetadata = message.getRecordMetadata();
+                logger.debug("[{}#{}] Event was successfully sent: partition={}, offset={}, key={}",
                         id,
                         event.getClass().getSimpleName(),
-                        event.getKey(),
-                        message.getRecordMetadata().offset());
+                        recordMetadata.partition(),
+                        recordMetadata.offset(),
+                        event.getKey());
             }
 
             @Override
@@ -94,5 +107,11 @@ public class KafkaPublisherImpl implements KafkaPublisher {
                 logger.error("[{}] Unable to send event", id, throwable);
             }
         });
+    }
+
+    private static void assertEvent(Event event) {
+        if (event == null) {
+            throw new IllegalArgumentException("event is null");
+        }
     }
 }

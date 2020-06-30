@@ -7,12 +7,13 @@ import java.util.Arrays;
 /**
  * Фазы работы потребителя.
  * Жизненный цикл:
- * NOT_STARTED -> RUNNING
- * RUNNING -> PAUSED | STOPPED
- * PAUSED -> RUNNING | STOPPED
- *
- * todo: для тестов нужно уметь перезапускать после остановки, но правильно ли?
- * STOPPED -> RUNNING
+ * <pre>
+ *  ( )         -> NOT_STARTED
+ *  NOT_STARTED -> RUNNING
+ *  RUNNING     -> PAUSED   |   STOPPED
+ *  PAUSED      -> RUNNING  |   STOPPED
+ *  STOPPED     -> (x)
+ * </pre>
  */
 public enum KafkaConsumerPhase {
     /**
@@ -35,25 +36,26 @@ public enum KafkaConsumerPhase {
 
     /**
      * Проверить корректность перехода от текущей фазы (данного экземпляра) к следующей
+     *
      * @param nextPhase следующая фаза
      * @return следующая фаза
      */
     public KafkaConsumerPhase assertNextPhase(KafkaConsumerPhase nextPhase) {
         switch (this) {
             case NOT_STARTED:
-            case STOPPED:
                 assertNextPhase(nextPhase, KafkaConsumerPhase.RUNNING);
                 break;
 
             case RUNNING:
-                assertNextPhase(
-                        nextPhase,
-                        KafkaConsumerPhase.PAUSED, KafkaConsumerPhase.STOPPED);
+                assertNextPhase(nextPhase, KafkaConsumerPhase.PAUSED, KafkaConsumerPhase.STOPPED);
                 break;
 
             case PAUSED:
                 assertNextPhase(nextPhase, KafkaConsumerPhase.RUNNING, KafkaConsumerPhase.STOPPED);
                 break;
+
+            case STOPPED:
+                throw new IllegalStateException("STOPPED is a final phase. No available next phases.");
         }
 
         return nextPhase;

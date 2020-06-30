@@ -3,10 +3,10 @@ package kafkablocks.processing;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.kafka.streams.kstream.KStream;
+import kafkablocks.events.Event;
 
 import java.util.LinkedList;
 import java.util.List;
-
 
 /**
  * Узел топологии обработки.
@@ -24,18 +24,19 @@ class TopologyNode {
     final List<TopologyNode> children = new LinkedList<>();
 
     @Getter
-    private final Class inputEventType;
+    private final Class<? extends Event> inputEventType;
     @Getter
-    private final Class outputEventType;
+    private final Class<? extends Event> outputEventType;
     @Getter
-    private final EventProcessor processor;
+    private final EventProcessor<? extends Event> processor;
 
     @Setter
-    private KStream inputStream;
+    private KStream<String, ? extends Event> inputStream;
     @Setter
-    private KStream outputStream;
+    private KStream<String, ? extends Event> outputStream;
 
-    KStream getInputStream() {
+
+    KStream<String, ? extends Event> getInputStream() {
         if (inputStream != null)
             return inputStream;
 
@@ -46,17 +47,26 @@ class TopologyNode {
     }
 
 
-    private TopologyNode(Class inputEventType, Class outputEventType, EventProcessor processor) {
+    private TopologyNode(
+            Class<? extends Event> inputEventType,
+            Class<? extends Event> outputEventType,
+            EventProcessor<? extends Event> processor) {
+
         this.inputEventType = inputEventType;
         this.outputEventType = outputEventType;
         this.processor = processor;
     }
 
-    static TopologyNode createNode(Class inputEventType, Class outputEventType, EventProcessor processor) {
+    static TopologyNode createNode(
+            Class<? extends Event> inputEventType,
+            Class<? extends Event> outputEventType,
+            EventProcessor<? extends Event> processor) {
         return new TopologyNode(inputEventType, outputEventType, processor);
     }
 
-    static TopologyNode createTerminalNode(Class inputEventType, EventProcessor processor) {
+    static TopologyNode createTerminalNode(
+            Class<? extends Event> inputEventType,
+            EventProcessor<? extends Event> processor) {
         return new TopologyNode(inputEventType, null, processor);
     }
 
@@ -92,9 +102,25 @@ class TopologyNode {
         if (this == EMPTY)
             return "";
 
+        String outputLabel = getOutputLabel(processor, inputEventType, outputEventType);
+
         return String.format("%s -> [%s] -> %s",
                 inputEventType.getSimpleName(),
                 processor.getClass().getSimpleName(),
-                outputEventType == null ? "x" : outputEventType.getSimpleName());
+                outputLabel);
+    }
+
+    private static String getOutputLabel(
+            EventProcessor<? extends Event> processor,
+            Class<? extends Event> inputEventType,
+            Class<? extends Event> outputEventType) {
+
+        if (processor instanceof StreamProcessor) {
+            return inputEventType.getSimpleName();
+        }
+
+        return outputEventType == null
+                ? "x"
+                : outputEventType.getSimpleName();
     }
 }

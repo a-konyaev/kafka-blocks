@@ -1,10 +1,8 @@
 package kafkablocks.consumer;
 
-import org.springframework.util.Assert;
 import kafkablocks.utils.TimeUtils;
-
+import org.springframework.util.Assert;
 import java.time.LocalDateTime;
-
 
 /**
  * Конструктор параметров потребителя

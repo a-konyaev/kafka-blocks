@@ -9,7 +9,6 @@ import org.springframework.context.ApplicationContext;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
-
 /**
  * Базовый класс для сервисов
  */

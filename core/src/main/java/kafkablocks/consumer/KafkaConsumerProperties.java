@@ -1,15 +1,14 @@
 package kafkablocks.consumer;
 
+import kafkablocks.AppProperties;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
-import kafkablocks.AppProperties;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-
 
 /**
  * Параметры Потребителя
@@ -17,7 +16,7 @@ import java.time.format.DateTimeFormatter;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Validated
-@ConfigurationProperties(prefix = "kafkablocks.consumer")
+@ConfigurationProperties(prefix = "whswd.kafka.consumer")
 public class KafkaConsumerProperties extends AppProperties {
     /**
      * Левая граница интервала "С" при типе потребления PAST_TIME_INTERVAL

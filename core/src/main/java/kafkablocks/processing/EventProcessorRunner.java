@@ -1,5 +1,7 @@
 package kafkablocks.processing;
 
+import kafkablocks.EventTopicProperties;
+import kafkablocks.ServiceBase;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
@@ -7,8 +9,7 @@ import org.apache.kafka.streams.errors.LogAndContinueExceptionHandler;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
-import kafkablocks.ServiceBase;
-import kafkablocks.EventTopicProperties;
+import kafkablocks.events.Event;
 
 import java.util.List;
 import java.util.Properties;
@@ -22,7 +23,7 @@ public class EventProcessorRunner extends ServiceBase {
     private final EventProcessorRunnerProperties runnerProperties;
     private final EventTopicProperties eventTopicProperties;
     private final KafkaProperties kafkaProperties;
-    private final List<EventProcessor> processors;
+    private final List<EventProcessor<? extends Event>> processors;
 
     private KafkaStreams kafkaStreams;
 
@@ -30,7 +31,7 @@ public class EventProcessorRunner extends ServiceBase {
                                 EventProcessorRunnerProperties runnerProperties,
                                 EventTopicProperties eventTopicProperties,
                                 KafkaProperties kafkaProperties,
-                                List<EventProcessor> processors) {
+                                List<EventProcessor<? extends Event>> processors) {
         this.appContext = appContext;
         this.runnerProperties = runnerProperties;
         this.eventTopicProperties = eventTopicProperties;
@@ -59,13 +60,13 @@ public class EventProcessorRunner extends ServiceBase {
     /**
      * Проверить, что для каждого типа событий процессоров определен топик
      */
-    @SuppressWarnings("unchecked")
     private void checkProcessorsEventTypes() {
-        for (EventProcessor processor : processors) {
+        for (EventProcessor<? extends Event> processor : processors) {
             eventTopicProperties.resolveTopicByEventClass(processor.getEventToProcessType());
 
             if (processor instanceof TransformingEventProcessor) {
-                TransformingEventProcessor transformingProcessor = (TransformingEventProcessor) processor;
+                TransformingEventProcessor<? extends Event, ? extends Event> transformingProcessor =
+                        (TransformingEventProcessor<? extends Event, ? extends Event>) processor;
                 eventTopicProperties.resolveTopicByEventClass(transformingProcessor.getResultEventType());
             }
         }
@@ -79,8 +80,20 @@ public class EventProcessorRunner extends ServiceBase {
         return new TopologyBuilder(
                 eventTopicProperties,
                 processors,
-                processorClass -> (() -> (TerminalEventProcessor) appContext.getBean(processorClass)),
-                processorClass -> (() -> (TransformingEventProcessor) appContext.getBean(processorClass)));
+                getTerminalEventProcessorSupplier(),
+                getTransformingEventProcessorSupplier());
+    }
+
+    private TerminalEventProcessorSupplier getTerminalEventProcessorSupplier() {
+        return processorClass -> (
+                () -> (TerminalEventProcessor<? extends Event>) appContext.getBean(processorClass)
+        );
+    }
+
+    private TransformingEventProcessorSupplier getTransformingEventProcessorSupplier() {
+        return processorClass -> (
+                () -> (TransformingEventProcessor<? extends Event, ? extends Event>) appContext.getBean(processorClass)
+        );
     }
 
     /**

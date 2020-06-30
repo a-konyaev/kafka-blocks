@@ -1,6 +1,5 @@
 package kafkablocks.consumer;
 
-
 /**
  * Интерфейс обработки ошибок
  */

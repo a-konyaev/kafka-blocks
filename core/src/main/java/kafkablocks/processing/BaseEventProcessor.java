@@ -1,12 +1,11 @@
 package kafkablocks.processing;
 
+import kafkablocks.events.Event;
 import lombok.Getter;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.GenericTypeResolver;
-import kafkablocks.events.Event;
-
 
 /**
  * Базовый процессор
@@ -33,7 +32,9 @@ public abstract class BaseEventProcessor<EventToProcess extends Event>
         init();
     }
 
-    protected abstract void init();
+    protected void init() {
+        // should be overridden if needed
+    }
 
     /**
      * Инициализация пунктуатора
@@ -44,7 +45,7 @@ public abstract class BaseEventProcessor<EventToProcess extends Event>
             return;
 
         this.context.schedule(
-                supplier.getIntervalMs(),
+                supplier.getInterval(),
                 supplier.getPunctuationType(),
                 timestamp -> {
                     logger.debug("Punctuation starting...");

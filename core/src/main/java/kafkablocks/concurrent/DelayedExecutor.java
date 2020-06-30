@@ -3,7 +3,6 @@ package kafkablocks.concurrent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
 
-import javax.annotation.PreDestroy;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import java.time.Duration;
@@ -11,8 +10,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
-
 
 @Slf4j
 public class DelayedExecutor<K, V> {
@@ -23,8 +22,9 @@ public class DelayedExecutor<K, V> {
     private final Object lock = new Object();
     private final Map<K, V> map = new HashMap<>();
     private final WaitHandle itemsLimitExceeded = new WaitHandle();
+    private final WaitHandle stopEvent = new WaitHandle();
 
-    private Thread thread;
+    private final Thread thread;
 
     /**
      * @param execTimeout Timeout on reaching which execution starts
@@ -44,12 +44,9 @@ public class DelayedExecutor<K, V> {
         thread.start();
     }
 
-    @PreDestroy
-    private void shutdown() throws InterruptedException {
-        if (thread != null) {
-            thread.interrupt();
-            thread.join(1000);
-        }
+    public void shutdown() {
+        log.debug("Delayed executor stopping...");
+        stopEvent.set();
     }
 
     public void addItem(K key, V value) {
@@ -77,9 +74,14 @@ public class DelayedExecutor<K, V> {
     }
 
     private void process() {
-        while (!Thread.interrupted()) {
+        while (true) {
             // ждем, но результат ожидания не важен - таймаут или лимит превышен, в любом случае начинаем обработку
-            itemsLimitExceeded.wait(execTimeout);
+            // за исключением, если выставлено событие остановки
+            int occurredEventIndex = WaitHandle.waitAny(execTimeout.toMillis(), TimeUnit.MILLISECONDS, stopEvent, itemsLimitExceeded);
+            if (occurredEventIndex == 0) {
+                log.debug("Delayed executor thread interrupted");
+                return;
+            }
 
             ArrayList<Map.Entry<K, V>> items;
             synchronized (lock) {
@@ -99,7 +101,7 @@ public class DelayedExecutor<K, V> {
         for (Map.Entry<K, V> item : items) {
             try {
                 action.accept(item.getKey(), item.getValue());
-            } catch (Throwable e) {
+            } catch (RuntimeException e) {
                 log.error("Execution failed for item: " + item, e);
             }
         }

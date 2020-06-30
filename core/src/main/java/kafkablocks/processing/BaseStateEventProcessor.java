@@ -1,16 +1,17 @@
 package kafkablocks.processing;
 
+import kafkablocks.events.Event;
+import kafkablocks.serialization.SerdeProvider;
 import lombok.Getter;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.processor.StateStore;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 import org.springframework.core.GenericTypeResolver;
-import kafkablocks.events.Event;
-import kafkablocks.serialization.SerdeProvider;
+import org.springframework.lang.NonNull;
 
-import javax.validation.constraints.NotNull;
-
+import java.util.Objects;
 
 /**
  * Базовый процессор, у которого есть состояние.
@@ -35,7 +36,7 @@ public abstract class BaseStateEventProcessor
         super();
 
         Class<?>[] types = GenericTypeResolver.resolveTypeArguments(getClass(), BaseStateEventProcessor.class);
-        stateType = (Class<ProcessorState>) types[1];
+        stateType = (Class<ProcessorState>) Objects.requireNonNull(types, "Cannot resolve state type")[1];
 
         stateStoreName = getClass().getName() + "_stateStore";
     }
@@ -47,7 +48,7 @@ public abstract class BaseStateEventProcessor
     }
 
     @Override
-    public StoreBuilder getStateStoreBuilder() {
+    public StoreBuilder<? extends StateStore> getStateStoreBuilder() {
         return Stores
                 .keyValueStoreBuilder(
                         Stores.inMemoryKeyValueStore(stateStoreName),
@@ -62,7 +63,7 @@ public abstract class BaseStateEventProcessor
      *
      * @return состояние или null, если состояние не было ранее сохранено
      */
-    protected ProcessorState getState(@NotNull String key) {
+    protected ProcessorState getState(@NonNull String key) {
         ProcessorState state = stateStore.get(key);
 
         // TODO: сделать реализацию с NotNull-состоянием, чтобы можно было проверять так: state.isEmpty()
@@ -78,7 +79,7 @@ public abstract class BaseStateEventProcessor
     /**
      * Обновить состояние
      */
-    protected void updateState(@NotNull String key, @NotNull ProcessorState newState) {
+    protected void updateState(@NonNull String key, @NonNull ProcessorState newState) {
         logger.debug("set new state: key={}; value={}", key, newState);
         newState.updateTimestamp();
         stateStore.put(key, newState);
@@ -89,7 +90,7 @@ public abstract class BaseStateEventProcessor
      * Состояние фактически удаляется, но если вызвать {@link this.getState()},
      * то будет возвращено пустое (не путать с null) состояние
      */
-    protected void resetState(@NotNull String key) {
+    protected void resetState(@NonNull String key) {
         logger.debug("reset state for key={}", key);
         stateStore.put(key, null);
     }

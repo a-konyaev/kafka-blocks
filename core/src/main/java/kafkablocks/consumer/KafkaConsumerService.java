@@ -1,13 +1,12 @@
 package kafkablocks.consumer;
 
+import kafkablocks.EventTopicProperties;
+import kafkablocks.ServiceBase;
+import kafkablocks.events.Event;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Service;
-import kafkablocks.ServiceBase;
-import kafkablocks.events.Event;
-import kafkablocks.EventTopicProperties;
-
 
 /**
  * Сервис "Потребителя".
@@ -53,11 +52,6 @@ public class KafkaConsumerService extends ServiceBase implements KafkaConsumer {
     }
 
     @Override
-    public void setIdleEventInterval(int sec) {
-        internalConsumer.setIdleEventInterval(sec);
-    }
-
-    @Override
     public void setPhaseChangedHandler(PhaseChangedHandler handler) {
         internalConsumer.setPhaseChangedHandler(handler);
     }
@@ -65,11 +59,6 @@ public class KafkaConsumerService extends ServiceBase implements KafkaConsumer {
     @Override
     public void setErrorHandler(ErrorHandler errorHandler) {
         internalConsumer.setErrorHandler(errorHandler);
-    }
-
-    @Override
-    public void setIdleHandler(Runnable idleHandler) {
-        internalConsumer.setIdleHandler(idleHandler);
     }
 
     @Override
@@ -130,13 +119,4 @@ public class KafkaConsumerService extends ServiceBase implements KafkaConsumer {
         return internalConsumer.getPhase();
     }
 
-    @Override
-    public void addFilter(Filter filter) {
-        internalConsumer.addFilter(filter);
-    }
-
-    @Override
-    public void resetFilters() {
-        internalConsumer.resetFilters();
-    }
 }

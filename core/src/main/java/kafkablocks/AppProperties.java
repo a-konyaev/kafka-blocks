@@ -9,7 +9,6 @@ import javax.annotation.PostConstruct;
 import java.lang.reflect.Field;
 import java.util.List;
 
-
 /**
  * Базовый класс для параметров приложения.
  * Вызывает инициализацию у классов наследников и распечатывать в лог значения параметров.

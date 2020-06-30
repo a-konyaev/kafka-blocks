@@ -1,18 +1,17 @@
 package kafkablocks.consumer;
 
+import kafkablocks.concurrent.WaitHandle;
+import kafkablocks.utils.ThreadUtils;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
-import kafkablocks.concurrent.WaitHandle;
-import kafkablocks.utils.ThreadUtils;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-
 
 /**
  * Базовый класс "Потребителя"
@@ -24,17 +23,6 @@ public abstract class KafkaConsumerBase implements KafkaConsumer {
     ConsumingParams consumingParams;
     @Setter
     protected ErrorHandler errorHandler;
-    @Setter
-    protected Runnable idleHandler;
-    /**
-     * Интервал простоя (в сек).
-     * Если в течение заданного интервала времени в топик не поступает новых событий,
-     * то будет выброшено событие "Простой".
-     * По умолчанию 30 секунд.
-     */
-    @Setter
-    protected int idleEventInterval = 30;
-
 
     /**
      * Конструктор
@@ -42,7 +30,7 @@ public abstract class KafkaConsumerBase implements KafkaConsumer {
      * @param idPrefix префикс, который используется при формировании идентификатора экземпляра
      */
     KafkaConsumerBase(String idPrefix) {
-        Class clazz = getClass();
+        Class<?> clazz = getClass();
 
         this.id = String.format("%s-%s",
                 StringUtils.isEmpty(idPrefix) ? clazz.getSimpleName() : idPrefix,
@@ -69,12 +57,16 @@ public abstract class KafkaConsumerBase implements KafkaConsumer {
         // При этом паузу и возобновление выполняем через внутренние методы,
         // т.к. их логика может отличаться от соотв. интерфейсных методов.
         logger.debug("changeRate...");
-        pauseInternal();
+
+        boolean paused = pauseInternal();
 
         consumingParams.setRate(rate);
         adjustPlaybackTimeTrackingParams(rate);
 
-        resumeInternal();
+        if (paused) {
+            resumeInternal();
+        }
+
         logger.debug("changeRate...done");
     }
 
@@ -88,7 +80,7 @@ public abstract class KafkaConsumerBase implements KafkaConsumer {
         logger.debug("pause...done");
     }
 
-    protected abstract void pauseInternal();
+    protected abstract boolean pauseInternal();
 
     @Override
     public void resume() {
@@ -102,12 +94,6 @@ public abstract class KafkaConsumerBase implements KafkaConsumer {
     void onError(String message, Throwable error) {
         logger.error("Error has occurred: " + message, error);
         runHandler(errorHandler, () -> errorHandler.onError(error), (ErrorHandler) null);
-    }
-
-    void onIdle() {
-        //todo: может в idleHandler будет интересно передавать this, т.е. источник события
-        logger.debug("Consumer idle");
-        runHandler(idleHandler, idleHandler, "IdleHandler");
     }
 
     //region Phases and phase-switch-events
@@ -131,15 +117,20 @@ public abstract class KafkaConsumerBase implements KafkaConsumer {
      */
     private final WaitHandle resumedEvent = new WaitHandle();
 
-    void setPhase(KafkaConsumerPhase newPhase) {
-        setPhase(newPhase, false, 0);
+    boolean setPhase(KafkaConsumerPhase newPhase) {
+        return setPhase(newPhase, false, 0);
     }
 
-    void setPhase(KafkaConsumerPhase newPhase, boolean notifyAsync, long notifyDelay) {
+    void assertNextPhase(KafkaConsumerPhase nextPhase) {
+        KafkaConsumerPhase tmp = this.phase;
+        tmp.assertNextPhase(nextPhase);
+    }
+
+    boolean setPhase(KafkaConsumerPhase newPhase, boolean notifyAsync, long notifyDelay) {
         synchronized (phaseMonitor) {
             if (phase == newPhase) {
-                logger.warn("Attempt to set a new phase equal to the current phase: " + newPhase);
-                return;
+                logger.debug("Attempt to set a new phase equal to the current phase: {}", newPhase);
+                return false;
             }
 
             phase = phase.assertNextPhase(newPhase);
@@ -189,6 +180,8 @@ public abstract class KafkaConsumerBase implements KafkaConsumer {
                     () -> phaseChangedHandler.onPhaseChanged(newPhase),
                     "phaseChangedHandler");
         }
+
+        return true;
     }
 
     @Override

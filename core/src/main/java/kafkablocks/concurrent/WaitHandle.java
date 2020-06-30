@@ -7,7 +7,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-
 /**
  * Примитив для синхронного и асинхронного ожидания события.
  * Требует ручного сброса после выставления.

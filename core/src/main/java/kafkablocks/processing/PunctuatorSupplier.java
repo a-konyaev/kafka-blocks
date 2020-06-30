@@ -3,23 +3,19 @@ package kafkablocks.processing;
 import lombok.Getter;
 import org.apache.kafka.streams.processor.PunctuationType;
 import org.apache.kafka.streams.processor.Punctuator;
+import org.springframework.lang.NonNull;
 
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Positive;
+import java.time.Duration;
 
-
+@Getter
 public class PunctuatorSupplier {
-    @Getter
+
     private final Punctuator punctuator;
-    @Getter
-    private final long intervalMs;
-    @Getter
+    private final Duration interval;
     private PunctuationType punctuationType = PunctuationType.WALL_CLOCK_TIME;
 
-
-    // TODO: не работают валидаторы... тк видимо это не бин. надо потом разобраться.
-    public PunctuatorSupplier(@NotNull Punctuator punctuator, @Positive long intervalMs) {
+    public PunctuatorSupplier(@NonNull Punctuator punctuator, @NonNull Duration interval) {
         this.punctuator = punctuator;
-        this.intervalMs = intervalMs;
+        this.interval = interval;
     }
 }

@@ -2,7 +2,6 @@ package kafkablocks.processing;
 
 import kafkablocks.events.Event;
 
-
 /**
  * Базовый класс терминального процессора без состояния
  * (терминальный - т.е. не порождает событий в результате обработки входных событий)
@@ -14,11 +13,6 @@ public abstract class BaseTerminalEventProcessor
         extends BaseEventProcessor<EventToProcess>
         implements
         TerminalEventProcessor<EventToProcess> {
-
-    @Override
-    protected void init() {
-        // do nothing
-    }
 
     @Override
     public void process(String key, EventToProcess value) {

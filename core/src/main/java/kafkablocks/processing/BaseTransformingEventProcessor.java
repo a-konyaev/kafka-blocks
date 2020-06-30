@@ -7,6 +7,7 @@ import org.springframework.util.CollectionUtils;
 import kafkablocks.events.Event;
 
 import java.util.List;
+import java.util.Objects;
 
 public abstract class BaseTransformingEventProcessor
         <EventToProcess extends Event, ResultEvent extends Event>
@@ -18,15 +19,12 @@ public abstract class BaseTransformingEventProcessor
     private final Class<ResultEvent> resultEventType;
 
 
+    @SuppressWarnings("unchecked")
     protected BaseTransformingEventProcessor() {
         super();
 
         Class<?>[] types = GenericTypeResolver.resolveTypeArguments(getClass(), BaseTransformingEventProcessor.class);
-        resultEventType = (Class<ResultEvent>) types[1];
-    }
-
-    @Override
-    protected void init() {
+        resultEventType = (Class<ResultEvent>) Objects.requireNonNull(types, "Cannot resolve result event type")[1];
     }
 
     @Override
@@ -36,7 +34,7 @@ public abstract class BaseTransformingEventProcessor
 
         List<ResultEvent> resList;
         try {
-            resList = processEvent(key, eventToProcess);
+            resList = process(key, eventToProcess);
         } catch (Exception e) {
             logger.error("Event processing failed", e);
             return null;
@@ -58,7 +56,7 @@ public abstract class BaseTransformingEventProcessor
      * @param eventToProcess событие, которое нужно обработать
      * @return список результирующих событий или null, если результат обработки не требует выдавать выходные события
      */
-    protected abstract List<ResultEvent> processEvent(String key, EventToProcess eventToProcess);
+    protected abstract List<ResultEvent> process(String key, EventToProcess eventToProcess);
 
     /**
      * Отправить результирующее событие в выходной топик

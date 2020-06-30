@@ -1,6 +1,6 @@
 package kafkablocks.utils;
 
-
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -45,6 +45,8 @@ public final class ObjectMapperUtils {
         mapper.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
         // не падать, если встретим неизвестные поля
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
         // задаем форматтер для записи даты и времени
         if (forSerialize != null) {

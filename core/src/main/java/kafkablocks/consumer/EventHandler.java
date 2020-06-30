@@ -2,7 +2,6 @@ package kafkablocks.consumer;
 
 import kafkablocks.events.Event;
 
-
 /**
  * Интерфейс обработчика событий
  * @param <T>

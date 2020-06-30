@@ -7,7 +7,7 @@ import org.springframework.util.CollectionUtils;
 import kafkablocks.events.Event;
 
 import java.util.List;
-
+import java.util.Objects;
 
 /**
  * Базовый класс процессора-трансформера с состоянием,
@@ -27,11 +27,12 @@ public abstract class BaseTransformingStateEventProcessor
     private final Class<ResultEvent> resultEventType;
 
 
+    @SuppressWarnings("unchecked")
     protected BaseTransformingStateEventProcessor() {
         super();
 
         Class<?>[] types = GenericTypeResolver.resolveTypeArguments(getClass(), BaseTransformingStateEventProcessor.class);
-        resultEventType = (Class<ResultEvent>)types[1];
+        resultEventType = (Class<ResultEvent>) Objects.requireNonNull(types, "Cannot resolve result event type")[1];
     }
 
     /**
@@ -52,7 +53,7 @@ public abstract class BaseTransformingStateEventProcessor
 
         List<ResultEvent> resList;
         try {
-            resList = processEvent(key, eventToProcess, state);
+            resList = process(key, eventToProcess, state);
         } catch (Exception e) {
             logger.error("Event processing failed", e);
             return null;
@@ -75,7 +76,7 @@ public abstract class BaseTransformingStateEventProcessor
      * @param state          состояние, которое хранится для ключа события. Если состояние еще не определено, то null.
      * @return список результирующих событий или null, если результат обработки не требует выдавать выходные события
      */
-    protected abstract List<ResultEvent> processEvent(String key, EventToProcess eventToProcess, ProcessorState state);
+    protected abstract List<ResultEvent> process(String key, EventToProcess eventToProcess, ProcessorState state);
 
     /**
      * Отправить результирующее событие в выходной топик

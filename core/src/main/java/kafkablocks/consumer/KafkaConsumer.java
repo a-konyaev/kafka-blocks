@@ -2,7 +2,6 @@ package kafkablocks.consumer;
 
 import kafkablocks.events.Event;
 
-
 /**
  * Интерфейс для получения событий из Кафки, т.е. Потребителя
  */
@@ -17,6 +16,12 @@ public interface KafkaConsumer {
     void start();
 
     void stop();
+
+    static void stopIfRunning(KafkaConsumer consumer) {
+        if (consumer != null && consumer.getPhase() == KafkaConsumerPhase.RUNNING) {
+            consumer.stop();
+        }
+    }
 
     /**
      * Запущен ли сейчас потребитель.
@@ -69,17 +74,6 @@ public interface KafkaConsumer {
     void changeRate(double rate);
 
     /**
-     * Установить интервал (в секундах) для срабатывания события "Простой", которое возникает,
-     * если дольше, чем sec данный потребитель не получает события из кафки
-     */
-    void setIdleEventInterval(int sec);
-
-    /**
-     * Установить обработчик события "Простой"
-     */
-    void setIdleHandler(Runnable idleHandler);
-
-    /**
      * Установить обработчик события "Время воспроизведения (изменилось)"
      * Применимо только для режима PAST_TIME_INTERVAL
      */
@@ -96,18 +90,4 @@ public interface KafkaConsumer {
 
     //endregion
 
-    //region Filtering
-
-    /**
-     * Добавить фильтр, чтобы получать не все события, а только те, которые удовлетворяют фильтру.
-     * Например, только события с заданным ключом = ИД объекта
-     */
-    void addFilter(Filter filter);
-
-    /**
-     * Удалить все фильтры
-     */
-    void resetFilters();
-
-    //endregion
 }

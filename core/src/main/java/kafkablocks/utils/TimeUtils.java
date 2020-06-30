@@ -62,4 +62,14 @@ public final class TimeUtils {
                 .map(ZonedDateTime::toLocalDateTime).orElse(null);
     }
 
+    /**
+     * ZonedDateTime в OffsetDateTime.
+     * @param zonedDateTime ZonedDateTime
+     * @return OffsetDateTime
+     */
+    public static OffsetDateTime zonedDateTimeToOffsetDateTime(ZonedDateTime zonedDateTime){
+        return Optional.ofNullable(zonedDateTime)
+                .map(zdt -> zdt.withZoneSameInstant(DEFAULT_ZONE))
+                .map(ZonedDateTime::toOffsetDateTime).orElse(null);
+    }
 }

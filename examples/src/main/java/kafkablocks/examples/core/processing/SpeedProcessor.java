@@ -18,7 +18,7 @@ public class SpeedProcessor
         extends BaseTransformingEventProcessor<DistanceEvent, SpeedEvent> {
 
     @Override
-    protected List<SpeedEvent> processEvent(String key, DistanceEvent distanceEvent) {
+    protected List<SpeedEvent> process(String key, DistanceEvent distanceEvent) {
         // todo
         var speedEvent = new SpeedEvent(distanceEvent.getObjectId(), 0);
 

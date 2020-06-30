@@ -1,6 +1,5 @@
 package kafkablocks.utils;
 
-
 import static java.lang.Thread.currentThread;
 
 public final class ThreadUtils {
@@ -11,7 +10,7 @@ public final class ThreadUtils {
      * Вызывает Thread.sleep с заданным кол-вом секунд.
      *
      * @param sec кол-во секунд
-     * @return true - ожидание завершено, false - ожидание было прервано
+     * @return true - ожидание завершено, false - ожидание было предвано
      */
     public static boolean safeDelaySec(long sec) {
         return safeDelay(sec * 1000);
@@ -21,7 +20,7 @@ public final class ThreadUtils {
      * Вызывает Thread.sleep с заданным кол-вом миллисекунд.
      *
      * @param millis кол-во миллисекунд
-     * @return true - ожидание завершено, false - ожидание было прервано
+     * @return true - ожидание завершено, false - ожидание было предвано
      */
     public static boolean safeDelay(long millis) {
         try {

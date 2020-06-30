@@ -1,17 +1,15 @@
 package kafkablocks.utils;
 
-import lombok.SneakyThrows;
 import kafkablocks.concurrent.WaitHandle;
+import lombok.SneakyThrows;
 
 import java.time.Duration;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
-
 public final class ActionUtils {
     private ActionUtils() {
     }
-
 
     public static boolean doSeveralAttempts(
             Runnable runnable,

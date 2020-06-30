@@ -1,10 +1,10 @@
 package kafkablocks.consumer;
 
+import kafkablocks.EventTopicProperties;
+import kafkablocks.events.Event;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.util.Assert;
-import kafkablocks.events.Event;
-import kafkablocks.EventTopicProperties;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
-
 
 /**
  * "Множественный потребитель" - выполняет прием сообщений разных типов,
@@ -53,7 +52,6 @@ public class KafkaMultipleConsumer extends KafkaConsumerBase implements KafkaCon
 
         KafkaSingleConsumer consumer = new KafkaSingleConsumer(eventType, eventTopicProperties, kafkaProperties);
         consumer.setErrorHandler(error -> onError("consumer error: " + consumer.getId(), error));
-        consumer.setIdleHandler(super::onIdle);
         // подписка на изменение фаз нужна, чтобы поймать момент, когда потребитель остановится
         consumer.setPhaseChangedHandler(this::onConsumerPhaseChanged);
 
@@ -80,11 +78,6 @@ public class KafkaMultipleConsumer extends KafkaConsumerBase implements KafkaCon
     }
 
     @Override
-    public void setIdleEventInterval(int sec) {
-        execForEachConsumer(consumer -> consumer.setIdleEventInterval(sec));
-    }
-
-    @Override
     public void setConsumingParams(ConsumingParams params) {
         super.setConsumingParams(params);
         execForEachConsumer(consumer -> consumer.setConsumingParams(params));
@@ -98,6 +91,10 @@ public class KafkaMultipleConsumer extends KafkaConsumerBase implements KafkaCon
 
     @Override
     public void start() {
+        if (consumerMap.size() == 0) {
+            throw new IllegalStateException("No event handlers set");
+        }
+
         execForEachConsumer(KafkaSingleConsumer::start);
         setPhase(KafkaConsumerPhase.RUNNING);
     }
@@ -116,8 +113,8 @@ public class KafkaMultipleConsumer extends KafkaConsumerBase implements KafkaCon
     }
 
     @Override
-    protected void pauseInternal() {
-        setPhase(KafkaConsumerPhase.PAUSED);
+    protected boolean pauseInternal() {
+        return setPhase(KafkaConsumerPhase.PAUSED);
     }
 
     @Override
@@ -130,16 +127,6 @@ public class KafkaMultipleConsumer extends KafkaConsumerBase implements KafkaCon
     @Override
     protected void resumeInternal() {
         setPhase(KafkaConsumerPhase.RUNNING);
-    }
-
-    @Override
-    public void addFilter(Filter filter) {
-        execForEachConsumer(consumer -> consumer.addFilter(filter));
-    }
-
-    @Override
-    public void resetFilters() {
-        execForEachConsumer(KafkaSingleConsumer::resetFilters);
     }
 
     private void execForEachNotStoppedConsumer(Consumer<KafkaSingleConsumer> action) {
@@ -163,7 +150,6 @@ public class KafkaMultipleConsumer extends KafkaConsumerBase implements KafkaCon
         Stream<KafkaSingleConsumer> stream = parallel ? consumers.parallelStream() : consumers.stream();
 
         stream.forEach(consumer -> {
-
             try {
                 if (filter != null && !filter.test(consumer))
                     // не прошли условие выполнения action

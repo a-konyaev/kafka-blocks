@@ -1,7 +1,7 @@
 package kafkablocks.processing;
 
-import lombok.Getter;
 import kafkablocks.utils.TimeUtils;
+import lombok.Getter;
 
 public abstract class EventProcessorState {
     /**

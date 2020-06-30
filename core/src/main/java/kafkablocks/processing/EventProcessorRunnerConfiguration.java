@@ -1,13 +1,13 @@
 package kafkablocks.processing;
 
+import kafkablocks.EventTopicProperties;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import kafkablocks.EventTopicProperties;
+import kafkablocks.events.Event;
 
 import java.util.List;
 
@@ -16,22 +16,23 @@ import java.util.List;
  */
 @Configuration
 @Import({EventProcessorRunnerProperties.class})
-@RequiredArgsConstructor(onConstructor_ = {@Autowired})
+@RequiredArgsConstructor
 public class EventProcessorRunnerConfiguration {
 
     private final ApplicationContext appContext;
     private final EventProcessorRunnerProperties runnerProperties;
     private final EventTopicProperties eventTopicProperties;
     private final KafkaProperties kafkaProperties;
-    private final List<EventProcessor> processors;
+    private final List<EventProcessor<? extends Event>> processors;
 
     @Bean
     public EventProcessorRunner eventProcessorRunner() {
-        return new EventProcessorRunner(appContext,
-            runnerProperties,
-            eventTopicProperties,
-            kafkaProperties,
-            processors);
+        return new EventProcessorRunner(
+                appContext,
+                runnerProperties,
+                eventTopicProperties,
+                kafkaProperties,
+                processors);
     }
 
 }

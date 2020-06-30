@@ -1,6 +1,5 @@
 package kafkablocks.function;
 
-
 /**
  * Интерфейс обработки ошибок
  */

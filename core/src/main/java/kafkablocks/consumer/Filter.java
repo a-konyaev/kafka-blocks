@@ -1,6 +1,5 @@
 package kafkablocks.consumer;
 
-
 /**
  * Фильтровать события можно по:
  * - ключу

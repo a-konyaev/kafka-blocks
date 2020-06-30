@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
-
 public final class TextUtils {
     private TextUtils() {
     }

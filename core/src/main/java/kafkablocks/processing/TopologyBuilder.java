@@ -1,5 +1,7 @@
 package kafkablocks.processing;
 
+import kafkablocks.EventTopicProperties;
+import kafkablocks.serialization.SerdeProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
@@ -8,8 +10,7 @@ import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Produced;
-import kafkablocks.EventTopicProperties;
-import kafkablocks.serialization.SerdeProvider;
+import kafkablocks.events.Event;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,14 +22,13 @@ import java.util.Map;
 public class TopologyBuilder {
 
     private final EventTopicProperties eventTopicProperties;
-    private final List<EventProcessor> processors;
+    private final List<EventProcessor<? extends Event>> processors;
     private final TerminalEventProcessorSupplier terminalProcessorSupplier;
     private final TransformingEventProcessorSupplier transformingProcessorSupplier;
 
     /**
      * Создать топологию обработки
      */
-    @SuppressWarnings("unchecked")
     public Topology build() {
         log.debug("Topology building...");
         StreamsBuilder builder = new StreamsBuilder();
@@ -36,44 +36,60 @@ public class TopologyBuilder {
         TopologyNode rootNode = createTopologyTree();
 
         for (TopologyNode node : rootNode.children) {
-            KStream stream = builder.stream(
-                    eventTopicProperties.resolveTopicByEventClass(node.getInputEventType()),
-                    Consumed.with(Serdes.String(), SerdeProvider.getSerde(node.getInputEventType())));
+            String topic = eventTopicProperties.resolveTopicByEventClass(node.getInputEventType());
+            Consumed<String, ? extends Event> consumed = Consumed.with(Serdes.String(), SerdeProvider.getSerde(node.getInputEventType()));
+
+            KStream<String, ? extends Event> stream = builder.stream(topic, consumed);
             node.setInputStream(stream);
 
             buildNode(builder, node);
         }
 
-        return builder.build();
+        Topology topology = builder.build();
+
+        if (log.isDebugEnabled()) {
+            log.debug(topology.describe().toString());
+        }
+
+        return topology;
     }
 
     @SuppressWarnings("unchecked")
     private void buildNode(StreamsBuilder builder, TopologyNode node) {
-        EventProcessor processor = node.getProcessor();
+        EventProcessor<? extends Event> processor = node.getProcessor();
         String[] stateStoreNameArr = null;
+
         if (processor instanceof StateEventProcessor) {
-            StateEventProcessor stateProcessor = (StateEventProcessor) processor;
+            StateEventProcessor<? extends Event, ? extends EventProcessorState> stateProcessor =
+                    (StateEventProcessor<? extends Event, ? extends EventProcessorState>) processor;
+
             builder.addStateStore(stateProcessor.getStateStoreBuilder());
             stateStoreNameArr = new String[1];
             stateStoreNameArr[0] = stateProcessor.getStateStoreName();
         }
 
         if (processor instanceof TransformingEventProcessor) {
-            KStream stream = node.getInputStream()
+            KStream<String, ? extends Event> outputStream = node.getInputStream()
                     .transform(
-                            transformingProcessorSupplier.get(((TransformingEventProcessor) processor).getClass()),
+                            transformingProcessorSupplier.get(
+                                    ((TransformingEventProcessor<? extends Event, ? extends Event>) processor)
+                                            .getClass()),
                             stateStoreNameArr)
                     .through(
                             eventTopicProperties.resolveTopicByEventClass(node.getOutputEventType()),
                             Produced.with(Serdes.String(), SerdeProvider.getSerde(node.getOutputEventType())));
 
-            node.setOutputStream(stream);
+            node.setOutputStream(outputStream);
 
         } else if (processor instanceof TerminalEventProcessor) {
             node.getInputStream()
                     .process(
-                            terminalProcessorSupplier.get(((TerminalEventProcessor) processor).getClass()),
+                            terminalProcessorSupplier.get(
+                                    ((TerminalEventProcessor<? extends Event>) processor).getClass()),
                             stateStoreNameArr);
+
+        } else if (processor instanceof StreamProcessor) {
+            node.setOutputStream(((StreamProcessor) processor).process(node.getInputStream()));
         }
 
         for (TopologyNode child : node.children) {
@@ -85,7 +101,7 @@ public class TopologyBuilder {
      * Сформировать дерево топологии
      *
      * @return корень дерева топологии - это фиктивный пустой узел,
-     * т.к. может быть несколько процессоров, которые претендуют на роль узла
+     * т.к. может быть несколько процессоров, которые претендуют на роль корневого узла
      */
     private TopologyNode createTopologyTree() {
         // корень дерева
@@ -93,15 +109,17 @@ public class TopologyBuilder {
         // Таблица типов результирующих событий топологии
         // - ключ - тип события, которое является результатом обработки узла топологии (выходных событий)
         // - значение - узел топологии обработки
-        Map<Class, TopologyNode> resultEventMap = new HashMap<>();
+        Map<Class<? extends Event>, TopologyNode> resultEventMap = new HashMap<>();
         // список всех узлов
         List<TopologyNode> nodes = new ArrayList<>();
 
         // создаем узел для каждого процессора
-        for (EventProcessor processor : processors) {
+        for (EventProcessor<? extends Event> processor : processors) {
             TopologyNode node;
             if (processor instanceof TransformingEventProcessor) {
-                Class resultEventType = ((TransformingEventProcessor) processor).getResultEventType();
+                Class<? extends Event> resultEventType =
+                        ((TransformingEventProcessor<? extends Event, ? extends Event>) processor).getResultEventType();
+
                 node = TopologyNode.createNode(
                         processor.getEventToProcessType(),
                         resultEventType,

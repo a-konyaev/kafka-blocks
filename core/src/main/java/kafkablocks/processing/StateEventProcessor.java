@@ -1,8 +1,8 @@
 package kafkablocks.processing;
 
+import org.apache.kafka.streams.processor.StateStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import kafkablocks.events.Event;
-
 
 public interface StateEventProcessor
         <EventToProcess extends Event, ProcessorState extends EventProcessorState>
@@ -10,5 +10,6 @@ public interface StateEventProcessor
 
     String getStateStoreName();
 
-    StoreBuilder getStateStoreBuilder();
+    StoreBuilder<? extends StateStore> getStateStoreBuilder();
+
 }
